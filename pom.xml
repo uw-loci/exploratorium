@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>loci</groupId>
+		<artifactId>pom-loci</artifactId>
+		<version>2.0.0</version>
+		<relativePath />
+	</parent>
+
+	<groupId>loci</groupId>
+	<artifactId>exploratorium_plugins</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+
+	<name>LOCI Exploratorium plugins</name>
+	<description>A collection of ImageJ plugins for the Exploratorium</description>
+	<inceptionYear>2016</inceptionYear>
+	<licenses>
+		<license>
+			<name>GNU General Public License v3+</name>
+			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>bdai6</id>
+			<name>Bing Dai</name>
+			<email>bdai6@wisc.edu</email>
+			<url>https://loci.wisc.edu/people/bing-dai</url>
+			<organization>UW-Madison LOCI</organization>
+			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>maintainer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+		<developer>
+			<id>ctrueden</id>
+			<name>Curtis Rueden</name>
+			<url>http://imagej.net/User:Rueden</url>
+			<roles>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git://github.com/uw-loci/exploratorium</connection>
+		<developerConnection>scm:git:git@github.com:uw-loci/exploratorium</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/uw-loci/exploratorium</url>
+	</scm>
+
+	<repositories>
+		<!-- NB: for project parent -->
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<configuration>
+					<licenseName>gpl_v3</licenseName>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
