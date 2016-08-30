@@ -474,9 +474,9 @@ public class Hough_Circles implements PlugInFilter {
 	    IJ.run("Smooth");
 		IJ.run("Find Edges");
 	//	IJ.run("Auto Threshold", "method=Default white");  // this plugin cannot be called in Java
-		IJ.setAutoThreshold(image,"Default white");
-		IJ.run(image, "Convert to Mask", "");
 		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
+		IJ.setAutoThreshold(image,"Default dark");
+		IJ.run(image, "Convert to Mask", "");
 
 		// run the plugin
 		IJ.runPlugIn(clazz.getName(), "");
