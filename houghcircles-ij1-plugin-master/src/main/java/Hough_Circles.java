@@ -466,7 +466,8 @@ public class Hough_Circles implements PlugInFilter {
 		new ImageJ();
 
 		// open the Clown sample
-		ImagePlus image = IJ.openImage("D:\\junkfinder_25x_dic_frame1.jpg");
+		String path = System.getProperty("user.dir") + "/src/main/java/junkfinder_25x_dic_frame1.jpg";
+		ImagePlus image = IJ.openImage(path);
 		image.show();
 		
 	    IJ.run("8-bit");
