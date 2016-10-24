@@ -15,12 +15,15 @@ and
 
 import ij.*;
 import ij.plugin.*;
-import ij.plugin.filter.PlugInFilter;
 import ij.plugin.filter.*;
 import ij.process.*;
 import inra.ijpb.morphology.Strel;
 
 import java.awt.*;
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.Stack;
+
 import ij.gui.*;
 import ij.measure.*;
 
@@ -77,6 +80,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 	boolean useThreshold = false;
 	int lut[][][]; // LookUp Table for rsin e rcos values
 	public static ImagePlus image;
+	
+	public static PriorityQueue<circle> circlePriorityQueue;
 
 	public int setup(String arg, ImagePlus imp) {
 		if (arg.equals("about")) {
@@ -100,6 +105,19 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 
 		if( readParameters() ) { // Show a Dialog Window for user input of
 			// radius and maxCircles.
+			Comparator<circle> comp=new Comparator<circle>()
+					{
+						public int compare(circle a,circle b)
+						{
+							if(a.houghValue>b.houghValue){return -1;}
+							else if(a.houghValue<b.houghValue){return 1;}
+							else
+							{
+								return 0;
+							}
+						}
+					};
+			circlePriorityQueue=new PriorityQueue<circle>(maxCircles,comp);
 			houghTransform();//makes a width*height*depth array- "houghValues"
 			createMiniMap();//reduces the houghValues' width and heightbya factor TEN
 			// Create image View for Hough Transform.
@@ -235,7 +253,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		int k = width - 1;
 		int l = height - 1;
 		int percentDone = 0;
-		for(int y = 1; y < l; y++) {
+		for(int y = 1; y < l; y++) 
+		{
 			int nowDone = y*100/l +1;
 			if (nowDone > percentDone){
 				percentDone = nowDone;
@@ -253,13 +272,49 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 								houghValues[a][b][indexR] += 1;
 							}
 						}
-
 					}
 				}
 			}
 
 		}
-
+		Stack<circle> circleStack=new Stack<circle>();
+		for(int y = 1; y < l; y++) 
+		{
+			for(int x = 1; x < k; x++) {
+				for(int radius = radiusMin;radius <= radiusMax;radius = radius+radiusInc) {
+					int indexR=(radius-radiusMin)/radiusInc;
+					if(houghValues[x][y][indexR]>50)
+					{
+						circle currentCircle=new circle(x,y,radius,houghValues[x][y][indexR]);
+						if(circlePriorityQueue.size()==maxCircles)//priorityqueue is full
+						{
+							while(circlePriorityQueue.size()>1)
+							{
+								circleStack.push(circlePriorityQueue.remove());
+							}
+							circle pqSmallestCircle=circlePriorityQueue.remove();
+							if(pqSmallestCircle.houghValue<currentCircle.houghValue)//adding a circle with higher houghValue
+							{
+								circlePriorityQueue.add(currentCircle);
+							}
+							else
+							{
+								circlePriorityQueue.add(pqSmallestCircle);
+							}
+							while(!circleStack.isEmpty())
+							{
+								circlePriorityQueue.add(circleStack.pop());
+							}
+						}
+						else
+						{
+							circlePriorityQueue.add(currentCircle);
+						}
+					}
+				}
+			}
+		}
+		System.out.println(1);
 	}
 
 	// Convert Values in Hough Space to an 8-Bit Image Space.
@@ -296,49 +351,28 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		// the future to show the resuls in a colored image.
 
 
+		
+		
 		for(int i = 0; i < width*height ;++i ) {
 			if(imageValues[i] != 0 )
 				circlespixels[i] = 100;
 			else
 				circlespixels[i] = 0;
 		}
-
+		 
 		if(centerPoint == null) {
 			if(useThreshold)
 				getCenterPointsByThreshold(threshold);
 			else
 				getCenterPoints(maxCircles);
 		}
-
-		byte cor = -1;//=255 = white n_
-
-		for(int l = 0; l < maxCircles; l++) {
-			int radius=2*circles[l].radius;
-			image.setRoi(new OvalRoi(circles[l].centerX-radius/2,circles[l].centerY-radius/2,radius,radius));
+		while(!circlePriorityQueue.isEmpty())
+		{
+			circle currentCircle=circlePriorityQueue.remove();
+			int radius=currentCircle.radius;
+			image.setRoi(new OvalRoi(currentCircle.centerX-radius,currentCircle.centerY-radius,2*radius,2*radius));
 			IJ.run(image, "Add Selection...", "");
 	        IJ.run("Overlay Options...", "stroke=red width=3 fill=none apply");
-	        System.out.format("Circle=%d x=%d y=%d r=%d houghValue=%d\n",l,circles[l].centerX,circles[l].centerY,circles[l].radius,circles[l].houghValue);
-			int i = centerPoint[l].x;
-			int j = centerPoint[l].y;
-
-			// Draw a gray cross marking the center of each circle.
-			for( int k = -10 ; k <= 10 ; ++k ) {
-				if(!outOfBounds(j+k+offy,i+offx))
-					circlespixels[(j+k+offy)*offset + (i+offx)] = cor;
-				if(!outOfBounds(j+offy,i+k+offx))
-					circlespixels[(j+offy)*offset   + (i+k+offx)] = cor;
-			}
-
-			for( int k = -2 ; k <= 2 ; ++k ) {
-				if(!outOfBounds(j-2+offy,i+k+offx))
-					circlespixels[(j-2+offy)*offset + (i+k+offx)] = cor;
-				if(!outOfBounds(j+2+offy,i+k+offx))
-					circlespixels[(j+2+offy)*offset + (i+k+offx)] = cor;
-				if(!outOfBounds(j+k+offy,i-2+offx))
-					circlespixels[(j+k+offy)*offset + (i-2+offx)] = cor;
-				if(!outOfBounds(j+k+offy,i+2+offx))
-					circlespixels[(j+k+offy)*offset + (i+2+offx)] = cor;
-			}
 		}
 	}
 
@@ -534,9 +568,10 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
 		System.setProperty("plugins.dir", pluginsDir);
 
-		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
+		
+		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
-		String path = System.getProperty("user.dir") + "/images/egg1.jpg";
+		//String path = System.getProperty("user.dir") + "/images/egg1.jpg";
 		image = IJ.openImage(path);
 		image.show();
 		IJ.run("8-bit");
