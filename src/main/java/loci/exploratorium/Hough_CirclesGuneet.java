@@ -278,12 +278,26 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 
 		}
 		Stack<circle> circleStack=new Stack<circle>();
-		for(int y = 1; y < l; y++) 
+		int neighborhood=1;
+		for(int y = neighborhood; y < height-neighborhood; y++) 
 		{
-			for(int x = 1; x < k; x++) {
+			for(int x = neighborhood; x < width-neighborhood; x++) {
 				for(int radius = radiusMin;radius <= radiusMax;radius = radius+radiusInc) {
 					int indexR=(radius-radiusMin)/radiusInc;
-					if(houghValues[x][y][indexR]>50)
+					boolean localMax=true;
+					for(int a=-neighborhood;a<=neighborhood&&localMax==true;a++)
+					{
+						for(int b=-neighborhood;b<=neighborhood;b++)
+						{
+							if(houghValues[x][y][indexR]<houghValues[x-a][y-b][indexR])
+							{
+								localMax=false;
+								break;
+							}
+						}
+					}
+					boolean intersectionWithOtherCircles=false;
+					if(houghValues[x][y][indexR]>50&&localMax)
 					{
 						circle currentCircle=new circle(x,y,radius,houghValues[x][y][indexR]);
 						if(circlePriorityQueue.size()==maxCircles)//priorityqueue is full
@@ -314,7 +328,6 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 				}
 			}
 		}
-		System.out.println(1);
 	}
 
 	// Convert Values in Hough Space to an 8-Bit Image Space.
@@ -350,9 +363,6 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		// circles appears more clear. Must be improved in
 		// the future to show the resuls in a colored image.
 
-
-		
-		
 		for(int i = 0; i < width*height ;++i ) {
 			if(imageValues[i] != 0 )
 				circlespixels[i] = 100;
@@ -569,8 +579,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		System.setProperty("plugins.dir", pluginsDir);
 
 		
-		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
-		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
+		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
+		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
 		//String path = System.getProperty("user.dir") + "/images/egg1.jpg";
 		image = IJ.openImage(path);
 		image.show();
