@@ -30,6 +30,20 @@ import ij.measure.*;
  *   an edge detection module and have edges marked in white (background
  *   must be in black).
  */
+class circle
+{
+	int centerX;
+	int centerY;
+	int radius;
+	int houghValue;
+	public circle(int x,int y,int r,int val)
+	{
+		this.centerX=x;
+		this.centerY=y;
+		this.radius=r;
+		this.houghValue=val;
+	}
+}
 public class Hough_CirclesGuneet implements PlugInFilter {
 
 	public int radiusMin;  // Find circles with radius grater or equal radiusMin
@@ -58,7 +72,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 	public Point centerPoint[]; // Center Points of the Circles Found.
 	public double radiusList[]; // radius of the circles found.
 	public int peakList[];      // maximum hough value of a circle found
-	public int circleRadius[];      // maximum hough value of a circle found
+	public circle circles[];//circles to be plotted
 	private int vectorMaxSize = 500;
 	boolean useThreshold = false;
 	int lut[][][]; // LookUp Table for rsin e rcos values
@@ -299,11 +313,11 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		byte cor = -1;//=255 = white n_
 
 		for(int l = 0; l < maxCircles; l++) {
-			int radius=2*circleRadius[l];
-			image.setRoi(new OvalRoi(centerPoint[l].x-radius/2,centerPoint[l].y-radius/2,radius,radius));
+			int radius=2*circles[l].radius;
+			image.setRoi(new OvalRoi(circles[l].centerX-radius/2,circles[l].centerY-radius/2,radius,radius));
 			IJ.run(image, "Add Selection...", "");
 	        IJ.run("Overlay Options...", "stroke=red width=3 fill=none apply");
-	   
+	        System.out.format("Circle=%d x=%d y=%d r=%d houghValue=%d\n",l,circles[l].centerX,circles[l].centerY,circles[l].radius,circles[l].houghValue);
 			int i = centerPoint[l].x;
 			int j = centerPoint[l].y;
 
@@ -370,7 +384,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		centerPoint = new Point[maxCircles];
 		radiusList = new double[maxCircles];
 		peakList = new int[maxCircles];
-		circleRadius = new int[maxCircles];
+		circles=new circle[maxCircles];
 		int xMiniMax = 0;
 		int yMiniMax = 0;
 		int xMax = 0;
@@ -410,7 +424,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 				centerPoint[c] = new Point (xMax, yMax);
 				radiusList[c]= rMax;//n__
 				peakList[c]= counterMax;//n__
-				circleRadius[c]=radiusMin+radiusInc*rMaxIndex;
+				circles[c]=new circle(xMax,yMax,radiusMin+radiusInc*rMaxIndex,counterMax);
 				clearNeighbours(xMax,yMax,rMax);
 			}
 		}
@@ -520,9 +534,9 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
 		System.setProperty("plugins.dir", pluginsDir);
 
-		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
+		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
-		
+		String path = System.getProperty("user.dir") + "/images/egg1.jpg";
 		image = IJ.openImage(path);
 		image.show();
 		IJ.run("8-bit");
