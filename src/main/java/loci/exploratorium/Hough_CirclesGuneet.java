@@ -58,6 +58,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 	public Point centerPoint[]; // Center Points of the Circles Found.
 	public double radiusList[]; // radius of the circles found.
 	public int peakList[];      // maximum hough value of a circle found
+	public int circleRadius[];      // maximum hough value of a circle found
 	private int vectorMaxSize = 500;
 	boolean useThreshold = false;
 	int lut[][][]; // LookUp Table for rsin e rcos values
@@ -298,7 +299,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		byte cor = -1;//=255 = white n_
 
 		for(int l = 0; l < maxCircles; l++) {
-			int radius=60;
+			int radius=2*circleRadius[l];
 			image.setRoi(new OvalRoi(centerPoint[l].x-radius/2,centerPoint[l].y-radius/2,radius,radius));
 			IJ.run(image, "Add Selection...", "");
 	        IJ.run("Overlay Options...", "stroke=red width=3 fill=none apply");
@@ -369,6 +370,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		centerPoint = new Point[maxCircles];
 		radiusList = new double[maxCircles];
 		peakList = new int[maxCircles];
+		circleRadius = new int[maxCircles];
 		int xMiniMax = 0;
 		int yMiniMax = 0;
 		int xMax = 0;
@@ -408,7 +410,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 				centerPoint[c] = new Point (xMax, yMax);
 				radiusList[c]= rMax;//n__
 				peakList[c]= counterMax;//n__
-
+				circleRadius[c]=radiusMin+radiusInc*rMaxIndex;
 				clearNeighbours(xMax,yMax,rMax);
 			}
 		}
