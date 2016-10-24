@@ -30,7 +30,7 @@ import ij.measure.*;
  *   an edge detection module and have edges marked in white (background
  *   must be in black).
  */
-public class Hough_Circles10 implements PlugInFilter {
+public class Hough_CirclesGuneet implements PlugInFilter {
 
 	public int radiusMin;  // Find circles with radius grater or equal radiusMin
 	public int radiusMax;  // Find circles with radius less or equal radiusMax
@@ -61,7 +61,7 @@ public class Hough_Circles10 implements PlugInFilter {
 	private int vectorMaxSize = 500;
 	boolean useThreshold = false;
 	int lut[][][]; // LookUp Table for rsin e rcos values
-
+	public static ImagePlus image;
 
 	public int setup(String arg, ImagePlus imp) {
 		if (arg.equals("about")) {
@@ -83,14 +83,13 @@ public class Hough_Circles10 implements PlugInFilter {
 		miniWidth = (int) Math.ceil((double) width/TEN);
 		miniHeight =(int) Math.ceil((double) height/TEN);
 
-
 		if( readParameters() ) { // Show a Dialog Window for user input of
 			// radius and maxCircles.
-			houghTransform();
-			createMiniMap();
+			houghTransform();//makes a width*height*depth array- "houghValues"
+			createMiniMap();//reduces the houghValues' width and heightbya factor TEN
 			// Create image View for Hough Transform.
 
-			if (showOutputImage == 2) {//n_
+			if (showOutputImage == 2) {
 				ImageProcessor newip = new ByteProcessor(width, height);
 				byte[] newpixels = (byte[])newip.getPixels();
 				for (int kk=0; kk<newpixels.length; kk++)
@@ -109,7 +108,7 @@ public class Hough_Circles10 implements PlugInFilter {
 			if (showOutputImage == 1) {//n_
 				ImageProcessor newip = new ByteProcessor(width, height);
 				byte[] newpixels = (byte[])newip.getPixels();
-				createHoughPixels(newpixels, 0);
+				createHoughPixels(newpixels, 0);//scales the houghValues acccumulator to show as a grayscale image
 				ImageProcessor circlesip = new ByteProcessor(width, height);
 				byte[] circlespixels = (byte[])circlesip.getPixels();
 				drawCircles(circlespixels);
@@ -299,11 +298,13 @@ public class Hough_Circles10 implements PlugInFilter {
 		byte cor = -1;//=255 = white n_
 
 		for(int l = 0; l < maxCircles; l++) {
-
+			int radius=60;
+			image.setRoi(new OvalRoi(centerPoint[l].x-radius/2,centerPoint[l].y-radius/2,radius,radius));
+			IJ.run(image, "Add Selection...", "");
+	        IJ.run("Overlay Options...", "stroke=red width=3 fill=none apply");
+	   
 			int i = centerPoint[l].x;
 			int j = centerPoint[l].y;
-
-
 
 			// Draw a gray cross marking the center of each circle.
 			for( int k = -10 ; k <= 10 ; ++k ) {
@@ -431,17 +432,14 @@ public class Hough_Circles10 implements PlugInFilter {
 
 		for(int radius = radiusMin;radius <= radiusMax;radius = radius+radiusInc) {
 			int indexR = (radius-radiusMin)/radiusInc;
-			for(int y = 0; y < height; y++) {
-				for(int x = 0; x < width; x++) {
-
-
+			for(int y = 0; y < height; y++) 
+			{
+				for(int x = 0; x < width; x++) 
+				{
 					int thisVal = houghValues[x][y][indexR];
-					if(thisVal > threshold) {
-
-
+					if(thisVal > threshold) 
+					{
 						if(countCircles < vectorMaxSize) {
-
-
 							centerPoint[countCircles] = new Point (x, y);
 							radiusList[countCircles]= radius;//n__
 							peakList[countCircles]= thisVal;//n__
@@ -466,21 +464,14 @@ public class Hough_Circles10 implements PlugInFilter {
     @param x The radius of the circle C found.
 	 */
 	private void clearNeighbours(int x,int y, int radius) {
-
-
 		// The following code just clean the points around the center of the circle found.
-
-
 		double halfRadius = radius / 2.0F;
 		double halfSquared = halfRadius*halfRadius;
-
 
 		int y1 = (int)Math.floor ((double)y - halfRadius);
 		int y2 = (int)Math.ceil ((double)y + halfRadius) + 1;
 		int x1 = (int)Math.floor ((double)x - halfRadius);
 		int x2 = (int)Math.ceil ((double)x + halfRadius) + 1;
-
-
 
 		if(y1 < 0)
 			y1 = 0;
@@ -490,8 +481,6 @@ public class Hough_Circles10 implements PlugInFilter {
 			x1 = 0;
 		if(x2 > width)
 			x2 = width;
-
-
 
 		for(int r = radiusMin;r <= radiusMax;r = r+radiusInc) {
 			int indexR = (r-radiusMin)/radiusInc;
@@ -504,15 +493,12 @@ public class Hough_Circles10 implements PlugInFilter {
 				}
 			}
 		}
-
 	}
 
 	private void centersToResultsTable(Point[] pointsUsed, double[] myRadiusList, int[]myPeakList){
 		ResultsTable rt = ResultsTable.getResultsTable();
 		if (!keepPreviousResults)
 			rt.reset();
-
-
 		int count = pointsUsed.length;
 		for (int n=0; n< count; n ++) {
 			rt.incrementCounter();
@@ -527,39 +513,23 @@ public class Hough_Circles10 implements PlugInFilter {
 
 	public static void main(String[] args) {
 		// set the plugins.dir property to make the plugin appear in the Plugins menu
-		Class<?> clazz = Hough_Circles10.class;
+		Class<?> clazz = Hough_CirclesGuneet.class;
 		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
 		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
 		System.setProperty("plugins.dir", pluginsDir);
 
-		// start ImageJ
-//		new ImageJ();
-
-		// open the sample image
-				String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
+		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
-		ImagePlus image = IJ.openImage(path);
+		
+		image = IJ.openImage(path);
 		image.show();
-
 		IJ.run("8-bit");
 		IJ.run("Smooth");
 		IJ.run("Find Edges");
-		//	IJ.run("Auto Threshold", "method=Default white");  // this plugin cannot be called in Java
 		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
 		IJ.setAutoThreshold(image,"Default dark");
 		IJ.run(image, "Convert to Mask", "");
-
 		// run the plugin
 		IJ.runPlugIn(clazz.getName(), "");
-
-		//		// Creates a r=2 disk structuring element
-		//		Strel strel = Strel.Shape.DISK.fromRadius(2);
-		//		// applies dilation on current image
-		//		ImageProcessor image1 = IJ.getImage().getProcessor();
-		//		ImageProcessor eroded = strel.erosion(image1);
-		//		// Display results
-		////		new ImagePlus("eroded", eroded).show();
 	}
-
-
 }
