@@ -29,6 +29,7 @@ import java.util.Stack;
 import ij.gui.*;
 import ij.measure.*;
 import ij.plugin.frame.*;
+import ij.process.*;
 
 /**
  *   This ImageJ plugin shows the Hough Transform Space and search for
@@ -176,27 +177,51 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		Stack<circle> circleStack=new Stack<circle>();
 		circle currentCircle;
 		originalImage.show();
+		int index=0;
+		ImagePlus mask,dilatedMask,erodedMask;
+		ImagePlus innerBoundary,outerBoundary;
+		ImageCalculator imageCalculator=new ImageCalculator();
 		while(!circlePriorityQueue.isEmpty())
 		{
+			mask=IJ.createImage("Mask","8-bit binary",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
+			mask.show();
 			currentCircle=circlePriorityQueue.remove();
 			boolean isBubble=false;
-			//bubble logic
+			
 			int x,y,r;
 			r=currentCircle.radius;
 			x=currentCircle.centerX-r;
 			y=currentCircle.centerY-r;
 			OvalRoi currentROI=new OvalRoi(x,y,2*r,2*r);
-			originalImage.setRoi(currentROI);
+			
 			roiManager.addRoi(currentROI);
+			originalImage.setRoi(currentROI);
+			roiManager.select(index);
+			IJ.setForegroundColor(255, 0, 0);
+			roiManager.runCommand(mask,"Fill");
+			IJ.run(mask, "Convert to Mask", "");
+			
+			erodedMask=IJ.getImage();
+			IJ.run(erodedMask, "Erode","");
+			erodedMask.show();
+			
+			dilatedMask=IJ.getImage();
+			IJ.run(dilatedMask,"Dilate","");
+			IJ.run(dilatedMask,"Dilate","");
+			dilatedMask.show();
+			
 			if(!isBubble)
 			{
 				circleStack.push(currentCircle);
 			}
+			roiManager.runCommand(mask,"DeSelect");
+			index++;
 		}
 		while(!circleStack.isEmpty())
 		{
 			circlePriorityQueue.add(circleStack.pop());
 		}
+		
 	}
 	
 	public static void removeFalseFish()
@@ -742,7 +767,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
 		//String path = System.getProperty("user.dir") + "/images/egg1.jpg";
-		imagePath = System.getProperty("user.dir") + "/images/Kip3001.jpg";
+		imagePath = System.getProperty("user.dir") + "/images/Kip1.jpg";
 		originalImage = IJ.openImage(imagePath );
 		originalImage.show();
 		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
