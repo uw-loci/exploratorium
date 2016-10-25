@@ -28,6 +28,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.*;
 import java.awt.*;
 import ij.gui.*;
+import inra.ijpb.morphology.Strel;
 
 /**
  * This ImageJ plugin shows the Hough Transform Space and search for circles in
@@ -255,8 +256,10 @@ public class Hough_Circles implements PlugInFilter {
 
         }
     }
-
-	// Draw the circles found in the original image.
+    
+/** 
+ * Mark the circles found in the original image.
+ */
 	public void drawCircles(byte[] circlespixels) {
 		
 		// Copy original input pixels into output
@@ -479,7 +482,8 @@ public class Hough_Circles implements PlugInFilter {
 		new ImageJ();
 
 		// open the Clown sample
-		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
+//		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
+		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
 		ImagePlus image = IJ.openImage(path);
 		image.show();
 		
@@ -493,7 +497,14 @@ public class Hough_Circles implements PlugInFilter {
 
 		// run the plugin
 		IJ.runPlugIn(clazz.getName(), "");
-//		IJ.showMessage("this is a test");
+		
+		// Creates a r=2 disk structuring element
+		Strel strel = Strel.Shape.DISK.fromRadius(2);
+		// applies dilation on current image
+		ImageProcessor image1 = IJ.getImage().getProcessor();
+		ImageProcessor eroded = strel.erosion(image1);
+		// Display results
+//		new ImagePlus("eroded", eroded).show();
 	}
 
 }

@@ -61,6 +61,7 @@ public class Hough_Circles10 implements PlugInFilter {
 	private int vectorMaxSize = 500;
 	boolean useThreshold = false;
 	int lut[][][]; // LookUp Table for rsin e rcos values
+	public int bubbleThreshold = 80; // threshold to eliminate false positives (air bubbles, debris, etc.) from results
 
 
 	public int setup(String arg, ImagePlus imp) {
@@ -143,10 +144,11 @@ public class Hough_Circles10 implements PlugInFilter {
 		gd.addNumericField("Step_Radius (in pixels):", 2, 0);
 		gd.addNumericField("Number_of_Circles (NC): (enter 0 if using threshold)", 3, 0);
 		gd.addNumericField("Threshold: (not used if NC > 0)", 60, 0);
+		gd.addNumericField("Bubble_Threshold: (1-99)", 80, 0);
 		gd.addNumericField("With_Output: (0, 1 or 2)", 1, 0);
 		gd.addNumericField("Keep_previous_results: (0 or 1)", 0, 0);
 
-		//gd.addCheckbox("Show output images", true); //n_ 
+//		gd.addCheckbox("Show output images", true); //n_ 
 
 		gd.showDialog();
 
@@ -160,6 +162,7 @@ public class Hough_Circles10 implements PlugInFilter {
 		depth = ((radiusMax-radiusMin)/radiusInc)+1;
 		maxCircles = (int) gd.getNextNumber();
 		threshold = (int) gd.getNextNumber();
+		bubbleThreshold = (int) gd.getNextNumber(); 
 		showOutputImage = (int) gd.getNextNumber();
 		keepPreviousResults = ( gd.getNextNumber() != 0);
 		if (maxCircles > 0) {
@@ -545,7 +548,33 @@ public class Hough_Circles10 implements PlugInFilter {
 			rt.addValue("rr", myRadiusList[n]);
 			rt.addValue("peak", myPeakList[n]);
 		}
-		rt.show("Results");
+		rt.show("results"); // not working if using "Results"
+	}
+	
+	/**
+	 * Eliminate false positives (air bubbles, debris, etc) from results.
+	 * Basic idea is to get a binary mask around edge of circles and check
+	 * if the inner boundary is dark - if dark then bubbles
+	 * @param circlesIn
+	 * @param RadiusListIn
+	 * @param peakListin
+	 */
+	@SuppressWarnings("unused")
+	private void checkforBubbles(Point[] circlesIn, double[] RadiusListIn, int[]peakListin){
+		// create a dummy image BW of same size as original image imgIn
+		ImagePlus BW = NewImage.createByteImage("Temporary Image Holder", width, height, 1, NewImage.FILL_BLACK);
+		ImageProcessor BW_ip = BW.getProcessor();
+		BW_ip.copyBits(ip, 0, 0, Blitter.COPY);
+//		BW.show();
+		// set all pixels of BW inside hough circle to 1, otherwise 0
+		// Creates a r=2 disk structuring element
+		// apply erosion on the BW and generate a tmp image
+		// generate a ring (= BW - tmp) that only the pixels on the Hough circle edge are 1
+		// apply ring as a binary mask on imgIn to get imageTmp
+		// calculate the mean value of imageTmp
+		// if meanValue > bubbleThreshold then it means features on the inner boundary are not black, then keep the data point; 
+		// otherwise remove it
+		// update the results
 	}
 
 	public static void main(String[] args) {
@@ -559,8 +588,8 @@ public class Hough_Circles10 implements PlugInFilter {
 //		new ImageJ();
 
 		// open the sample image
-		//		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
-		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
+		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
+		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
 		ImagePlus image = IJ.openImage(path);
 		image.show();
 
@@ -574,7 +603,7 @@ public class Hough_Circles10 implements PlugInFilter {
 
 		// run the plugin
 		IJ.runPlugIn(clazz.getName(), "");
-
+		
 		//		// Creates a r=2 disk structuring element
 		//		Strel strel = Strel.Shape.DISK.fromRadius(2);
 		//		// applies dilation on current image
