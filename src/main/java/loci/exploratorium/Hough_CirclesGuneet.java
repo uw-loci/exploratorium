@@ -50,7 +50,7 @@ class circle
 	}
 	public boolean intersect(circle other)
 	{
-		double tolerance=0.9;//tolerance of overlap
+		double tolerance=0.80;//tolerance of overlap
 		double dist=Math.sqrt(Math.pow(this.centerX-other.centerX, 2)+(Math.pow(this.centerY-other.centerY, 2)));
 		if(dist<tolerance*(this.radius+other.radius))
 		{
@@ -157,6 +157,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 				ImageProcessor circlesip = new ByteProcessor(width, height);
 				byte[] circlespixels = (byte[])circlesip.getPixels();
 				removeIntersections();
+				removeBubbles();
+				removeFalseFish();
 				drawCircles(circlespixels);
 				new ImagePlus("Hough Space [r="+radiusMin+"]", newip).show(); // Shows only the hough space for the minimun radius
 				new ImagePlus(maxCircles+" Circles Found", circlesip).show();
@@ -164,6 +166,34 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		}
 	}
 
+	public static void removeBubbles()
+	{
+		//Finds inner and outer boundaries and the average 8-bit value within them - if either is less than a threshold -50 => Remove the circle
+		//inner boundary found by =>maskInCircle-MaskInCircleEroded
+		//outer boundary found by =>maskInCircleDilated-maskInCircle
+		Stack<circle> circleStack=new Stack<circle>();
+		circle currentCircle;
+		while(!circlePriorityQueue.isEmpty())
+		{
+			currentCircle=circlePriorityQueue.remove();
+			boolean isBubble=false;
+			//bubble logic
+			if(!isBubble)
+			{
+				circleStack.push(currentCircle);
+			}
+		}
+		while(!circleStack.isEmpty())
+		{
+			circlePriorityQueue.add(circleStack.pop());
+		}
+	}
+	
+	public static void removeFalseFish()
+	{
+		//Check the entropy within the circle. if the circle has entropy<threshold => drop the circle
+	}
+	
 	private static void removeIntersections()
 	{
 		LinkedList<circle> list=new LinkedList<circle>();
@@ -330,7 +360,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 				for(int radius = radiusMin;radius <= radiusMax;radius = radius+radiusInc) 
 				{
 					int indexR=(radius-radiusMin)/radiusInc;
-					if(houghValues[x][y][indexR]<50)
+					if(houghValues[x][y][indexR]<100)//image should have atleast 50 points to be detected as a circle
 					{
 						continue;
 					}
@@ -700,18 +730,37 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 
 		
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
-		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
+		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
 		//String path = System.getProperty("user.dir") + "/images/egg1.jpg";
+		String path = System.getProperty("user.dir") + "/images/Kip3001.jpg";
 		image = IJ.openImage(path);
 		image.show();
+		/*
 		IJ.run("8-bit");
-		//IJ.run("Smooth");
+		IJ.run("Smooth");
 		IJ.run("Find Edges");
 		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
 		IJ.setAutoThreshold(image,"Default dark");
 		IJ.run(image, "Convert to Mask", "");
+		*/
+		IJ.run("8-bit");
+		IJ.run("Smooth");
+		IJ.run("Find Edges");
+		
+		IJ.setAutoThreshold(image,"Default dark");
+		IJ.run(image, "Convert to Mask", "");
+		IJ.run("Dilate");
+		IJ.run("Dilate");
+		IJ.run("Dilate");
+		IJ.run("Fill Holes");
+		IJ.run("Erode");
+		IJ.run("Erode");
+		IJ.run("Erode");
+		IJ.run("Outline");
+		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
 		// run the plugin
 		PriorityQueue<Integer> pq=new PriorityQueue<Integer>(3,Collections.reverseOrder());
+
 		IJ.runPlugIn(clazz.getName(), "");
 		
 	}
