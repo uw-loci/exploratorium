@@ -20,7 +20,9 @@ import ij.process.*;
 import inra.ijpb.morphology.Strel;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Stack;
 
@@ -45,6 +47,16 @@ class circle
 		this.centerY=y;
 		this.radius=r;
 		this.houghValue=val;
+	}
+	public boolean intersect(circle other)
+	{
+		double tolerance=0.9;//tolerance of overlap
+		double dist=Math.sqrt(Math.pow(this.centerX-other.centerX, 2)+(Math.pow(this.centerY-other.centerY, 2)));
+		if(dist<tolerance*(this.radius+other.radius))
+		{
+			return true;
+		}
+		return false;
 	}
 }
 public class Hough_CirclesGuneet implements PlugInFilter {
@@ -144,6 +156,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 				createHoughPixels(newpixels, 0);//scales the houghValues acccumulator to show as a grayscale image
 				ImageProcessor circlesip = new ByteProcessor(width, height);
 				byte[] circlespixels = (byte[])circlesip.getPixels();
+				removeIntersections();
 				drawCircles(circlespixels);
 				new ImagePlus("Hough Space [r="+radiusMin+"]", newip).show(); // Shows only the hough space for the minimun radius
 				new ImagePlus(maxCircles+" Circles Found", circlesip).show();
@@ -151,6 +164,36 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		}
 	}
 
+	private static void removeIntersections()
+	{
+		LinkedList<circle> list=new LinkedList<circle>();
+		while(!circlePriorityQueue.isEmpty())
+		{
+			list.addLast(circlePriorityQueue.remove());
+		}
+		int i=0,j;
+		while(i<list.size())
+		{
+			j=i+1;
+			while(j<list.size())
+			{
+				if(list.get(i).intersect(list.get(j)))
+				{
+					list.remove(j);
+				}
+				else
+				{
+					j++;
+				}
+			}
+			i++;
+		}
+		for(i=0;i<list.size();i++)
+		{
+			circlePriorityQueue.add(list.get(i));
+		}
+	}
+	
 	void showAbout() {
 		IJ.showMessage("About Circles_...",
 				"This plugin finds n circles\n" +
@@ -167,7 +210,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		gd.addNumericField("Min_Radius (in pixels):", 35, 0);
 		gd.addNumericField("Max_Radius (in pixels):", 45, 0);
 		gd.addNumericField("Step_Radius (in pixels):", 2, 0);
-		gd.addNumericField("Number_of_Circles (NC): (enter 0 if using threshold)", 3, 0);
+		gd.addNumericField("Number_of_Circles (NC): (enter 0 if using threshold)", 10, 0);
 		gd.addNumericField("Threshold: (not used if NC > 0)", 60, 0);
 		gd.addNumericField("With_Output: (0, 1 or 2)", 1, 0);
 		gd.addNumericField("Keep_previous_results: (0 or 1)", 0, 0);
@@ -277,13 +320,20 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			}
 
 		}
-		Stack<circle> circleStack=new Stack<circle>();
+		Stack<circle> circleStack;
+		circle currentCircle,circleInPQ;
 		int neighborhood=1;
 		for(int y = neighborhood; y < height-neighborhood; y++) 
 		{
-			for(int x = neighborhood; x < width-neighborhood; x++) {
-				for(int radius = radiusMin;radius <= radiusMax;radius = radius+radiusInc) {
+			for(int x = neighborhood; x < width-neighborhood; x++) 
+			{
+				for(int radius = radiusMin;radius <= radiusMax;radius = radius+radiusInc) 
+				{
 					int indexR=(radius-radiusMin)/radiusInc;
+					if(houghValues[x][y][indexR]<50)
+					{
+						continue;
+					}
 					boolean localMax=true;
 					for(int a=-neighborhood;a<=neighborhood&&localMax==true;a++)
 					{
@@ -296,40 +346,99 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 							}
 						}
 					}
-					boolean intersectionWithOtherCircles=false;
-					if(houghValues[x][y][indexR]>50&&localMax)
+					if(!localMax)
 					{
-						circle currentCircle=new circle(x,y,radius,houghValues[x][y][indexR]);
-						if(circlePriorityQueue.size()==maxCircles)//priorityqueue is full
+						continue;
+					}
+					currentCircle=new circle(x,y,radius,houghValues[x][y][indexR]);
+					//The code below is reached when the houghValue is greater than 50 , pixel is local maximum 
+					//At all points the circlePriorityQueue must contain non overlapping circles
+					if(circlePriorityQueue.size()==0)
+					{
+						circlePriorityQueue.add(currentCircle);
+					}
+					else
+					{	
+						//find number of intersections and the closestCircle
+						//if number of intersections is more than 1 dont add the current circle
+						//if number of intersections is one then remove the circle with the intersection and add the currentCircle
+						//if no intersection then add the currentCircle
+						circle intersectingCircle=null;//if not null then the currentCircle intersects with a circle in PQ
+						int numIntersections=0;
+						circleStack=new Stack<circle>();
+						circle iteratorCircle;
+						
+						while(!circlePriorityQueue.isEmpty())
 						{
-							while(circlePriorityQueue.size()>1)
+							iteratorCircle=circlePriorityQueue.remove();
+							if(currentCircle.intersect(iteratorCircle)&&currentCircle.houghValue>iteratorCircle.houghValue)
 							{
-								circleStack.push(circlePriorityQueue.remove());
+								numIntersections++;
+								intersectingCircle=iteratorCircle;
 							}
-							circle pqSmallestCircle=circlePriorityQueue.remove();
-							if(pqSmallestCircle.houghValue<currentCircle.houghValue)//adding a circle with higher houghValue
+							if(currentCircle.intersect(iteratorCircle))
 							{
-								circlePriorityQueue.add(currentCircle);
+								intersectingCircle=iteratorCircle;
 							}
-							else
+							circleStack.push(iteratorCircle);
+						}
+						while(!circleStack.isEmpty())
+						{
+							circlePriorityQueue.add(circleStack.pop());
+						}
+						//If there is a circle which has higher houghValue intersecting the circles in PQ -then we remove all such circles
+						//if there is no intersection 
+						if(numIntersections>0)
+						{
+							//removing all circles in PQ which intersect with currentCircle
+							while(!circlePriorityQueue.isEmpty())
 							{
-								circlePriorityQueue.add(pqSmallestCircle);
+								iteratorCircle=circlePriorityQueue.remove();
+								if(currentCircle.intersect(iteratorCircle)&&currentCircle.houghValue>iteratorCircle.houghValue)
+								{
+									//do nothing
+								}
+								else
+								{
+									circleStack.push(iteratorCircle);
+								}
 							}
 							while(!circleStack.isEmpty())
 							{
 								circlePriorityQueue.add(circleStack.pop());
 							}
+							circlePriorityQueue.add(currentCircle);
 						}
-						else
+						else if(intersectingCircle==null&&circlePriorityQueue.size()<maxCircles)
 						{
 							circlePriorityQueue.add(currentCircle);
 						}
 					}
-				}
+				}			
 			}
 		}
 	}
-
+	public int findIntersectionNumberAndClosestCircle(circle intersectingCircle,circle currentCircle)
+	{
+		int ans=0;
+		Stack<circle> circleStack=new Stack<circle>();
+		circle iteratorCircle;
+		while(!circlePriorityQueue.isEmpty())
+		{
+			iteratorCircle=circlePriorityQueue.remove();
+			if(currentCircle.intersect(iteratorCircle))
+			{
+				ans++;
+				intersectingCircle=iteratorCircle;
+			}
+			circleStack.push(iteratorCircle);
+		}
+		while(!circleStack.isEmpty())
+		{
+			circlePriorityQueue.add(circleStack.pop());
+		}
+		return ans;
+	}
 	// Convert Values in Hough Space to an 8-Bit Image Space.
 	private void createHoughPixels (byte houghPixels[], double factor) {
 
@@ -376,6 +485,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			else
 				getCenterPoints(maxCircles);
 		}
+		int kip=1;
 		while(!circlePriorityQueue.isEmpty())
 		{
 			circle currentCircle=circlePriorityQueue.remove();
@@ -383,6 +493,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			image.setRoi(new OvalRoi(currentCircle.centerX-radius,currentCircle.centerY-radius,2*radius,2*radius));
 			IJ.run(image, "Add Selection...", "");
 	        IJ.run("Overlay Options...", "stroke=red width=3 fill=none apply");
+	        System.out.format("circleNumber=%d centerX=%d centerY=%d radius=%d houghValue=%d\n",kip++,currentCircle.centerX,currentCircle.centerY,currentCircle.radius,currentCircle.houghValue);
 		}
 	}
 
@@ -580,17 +691,19 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 
 		
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
-		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
-		//String path = System.getProperty("user.dir") + "/images/egg1.jpg";
+		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
+		String path = System.getProperty("user.dir") + "/images/egg1.jpg";
 		image = IJ.openImage(path);
 		image.show();
 		IJ.run("8-bit");
-		IJ.run("Smooth");
+		//IJ.run("Smooth");
 		IJ.run("Find Edges");
 		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
 		IJ.setAutoThreshold(image,"Default dark");
 		IJ.run(image, "Convert to Mask", "");
 		// run the plugin
+		PriorityQueue<Integer> pq=new PriorityQueue<Integer>(3,Collections.reverseOrder());
 		IJ.runPlugIn(clazz.getName(), "");
+		
 	}
 }
