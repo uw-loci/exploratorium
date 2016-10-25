@@ -28,6 +28,7 @@ import java.util.Stack;
 
 import ij.gui.*;
 import ij.measure.*;
+import ij.plugin.frame.*;
 
 /**
  *   This ImageJ plugin shows the Hough Transform Space and search for
@@ -91,8 +92,9 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 	private int vectorMaxSize = 500;
 	boolean useThreshold = false;
 	int lut[][][]; // LookUp Table for rsin e rcos values
-	public static ImagePlus image;
-	
+	public static ImagePlus image,originalImage;
+	public static String imagePath;
+	private static RoiManager roiManager=new RoiManager();
 	public static PriorityQueue<circle> circlePriorityQueue;
 
 	public int setup(String arg, ImagePlus imp) {
@@ -173,11 +175,19 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//outer boundary found by =>maskInCircleDilated-maskInCircle
 		Stack<circle> circleStack=new Stack<circle>();
 		circle currentCircle;
+		originalImage.show();
 		while(!circlePriorityQueue.isEmpty())
 		{
 			currentCircle=circlePriorityQueue.remove();
 			boolean isBubble=false;
 			//bubble logic
+			int x,y,r;
+			r=currentCircle.radius;
+			x=currentCircle.centerX-r;
+			y=currentCircle.centerY-r;
+			OvalRoi currentROI=new OvalRoi(x,y,2*r,2*r);
+			originalImage.setRoi(currentROI);
+			roiManager.addRoi(currentROI);
 			if(!isBubble)
 			{
 				circleStack.push(currentCircle);
@@ -732,17 +742,14 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
 		//String path = System.getProperty("user.dir") + "/images/egg1.jpg";
-		String path = System.getProperty("user.dir") + "/images/Kip3001.jpg";
-		image = IJ.openImage(path);
-		image.show();
-		/*
-		IJ.run("8-bit");
-		IJ.run("Smooth");
-		IJ.run("Find Edges");
+		imagePath = System.getProperty("user.dir") + "/images/Kip3001.jpg";
+		originalImage = IJ.openImage(imagePath );
+		originalImage.show();
 		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
-		IJ.setAutoThreshold(image,"Default dark");
-		IJ.run(image, "Convert to Mask", "");
-		*/
+		
+		image = IJ.openImage(imagePath );
+		image.show();
+
 		IJ.run("8-bit");
 		IJ.run("Smooth");
 		IJ.run("Find Edges");
