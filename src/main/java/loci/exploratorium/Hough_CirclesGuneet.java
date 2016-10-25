@@ -359,15 +359,13 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 					}
 					else
 					{	
-						//find number of intersections and the closestCircle
-						//if number of intersections is more than 1 dont add the current circle
-						//if number of intersections is one then remove the circle with the intersection and add the currentCircle
-						//if no intersection then add the currentCircle
-						circle intersectingCircle=null;//if not null then the currentCircle intersects with a circle in PQ
+						circle intersectingCircle=null;		//if not null then the currentCircle intersects with a circle in PQ
 						int numIntersections=0;
-						circleStack=new Stack<circle>();
-						circle iteratorCircle;
+						circleStack=new Stack<circle>(); 	//a scratch stack used to store the circles in circlesPriorityQueue
+						circle iteratorCircle;				//iterates through all circlesin circlesPriorityQueue
 						
+						//Finding Number of circles which intersect with the currentCircle and have HoughValues less than currentCircle's -
+						//i.e. finding number of circles in the priority queue which are less prominent than the current circle
 						while(!circlePriorityQueue.isEmpty())
 						{
 							iteratorCircle=circlePriorityQueue.remove();
@@ -384,19 +382,23 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 						}
 						while(!circleStack.isEmpty())
 						{
-							circlePriorityQueue.add(circleStack.pop());
+							circlePriorityQueue.add(circleStack.pop());	//Restoring the priorityQueue from stack
 						}
+						
 						//If there is a circle which has higher houghValue intersecting the circles in PQ -then we remove all such circles
 						//if there is no intersection 
 						if(numIntersections>0)
 						{
+							boolean circleRemoved=false;
 							//removing all circles in PQ which intersect with currentCircle
 							while(!circlePriorityQueue.isEmpty())
 							{
 								iteratorCircle=circlePriorityQueue.remove();
 								if(currentCircle.intersect(iteratorCircle)&&currentCircle.houghValue>iteratorCircle.houghValue)
 								{
-									//do nothing
+									//Discard the circles in PQ which intersect with the currentCircle and have a lower HoughValue than currentCircle
+									//Discarding done by not pushing the iterator circle in stack
+									circleRemoved=true;
 								}
 								else
 								{
@@ -405,12 +407,19 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 							}
 							while(!circleStack.isEmpty())
 							{
+								//transfering stack circles to the PQ
 								circlePriorityQueue.add(circleStack.pop());
 							}
-							circlePriorityQueue.add(currentCircle);
+							if(circleRemoved&&circlePriorityQueue.size()<maxCircles)
+							{
+								//if the currentCircle is more prominent it would have removed a circle from the PQ
+								//if the currentCircle was not prominent and there is space in t
+								circlePriorityQueue.add(currentCircle);	
+							}
 						}
 						else if(intersectingCircle==null&&circlePriorityQueue.size()<maxCircles)
 						{
+							//No circle in circlesPriorityQueue intersects with the currentCircle and there is a space in the pq to push one more
 							circlePriorityQueue.add(currentCircle);
 						}
 					}
@@ -691,8 +700,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 
 		
 		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
-		//String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
-		String path = System.getProperty("user.dir") + "/images/egg1.jpg";
+		String path = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
+		//String path = System.getProperty("user.dir") + "/images/egg1.jpg";
 		image = IJ.openImage(path);
 		image.show();
 		IJ.run("8-bit");
