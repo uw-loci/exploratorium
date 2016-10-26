@@ -177,13 +177,21 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		Stack<circle> circleStack=new Stack<circle>();
 		circle currentCircle;
 		originalImage.show();
+		IJ.run(originalImage,"8-bit","");
 		int index=0;
 		ImagePlus mask,dilatedMask,erodedMask;
 		ImagePlus innerBoundary,outerBoundary;
+		ImagePlus innerBoundaryMask,outerBoundaryMask;
 		ImageCalculator imageCalculator=new ImageCalculator();
+		
 		while(!circlePriorityQueue.isEmpty())
 		{
-			mask=IJ.createImage("Mask","8-bit binary",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
+			mask=IJ.createImage("Mask","8-bit binary black",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
+			//mask=IJ.creat
+			erodedMask=IJ.createImage("Mask","8-bit binary",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
+			dilatedMask=IJ.createImage("Mask","8-bit binary",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
+			IJ.setForegroundColor(255, 255, 255);
+			IJ.setBackgroundColor(0, 0, 0);
 			mask.show();
 			currentCircle=circlePriorityQueue.remove();
 			boolean isBubble=false;
@@ -197,19 +205,41 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			roiManager.addRoi(currentROI);
 			originalImage.setRoi(currentROI);
 			roiManager.select(index);
-			IJ.setForegroundColor(255, 0, 0);
 			roiManager.runCommand(mask,"Fill");
-			IJ.run(mask, "Convert to Mask", "");
+			IJ.run(mask, "Invert","");
 			
-			erodedMask=IJ.getImage();
-			IJ.run(erodedMask, "Erode","");
+			IJ.run(mask, "Erode","");
+			IJ.run(mask, "Erode","");
+			IJ.run(mask, "Erode","");
+			IJ.run(mask, "Erode","");
+			mask.copy();
+			erodedMask.paste();
 			erodedMask.show();
 			
-			dilatedMask=IJ.getImage();
-			IJ.run(dilatedMask,"Dilate","");
-			IJ.run(dilatedMask,"Dilate","");
+			//One dilate to counter the Erosion and another dilation for actual dilation from the original mask
+			IJ.run(mask,"Dilate","");
+			IJ.run(mask,"Dilate","");
+			IJ.run(mask,"Dilate","");
+			IJ.run(mask,"Dilate","");
+			IJ.run(mask,"Dilate","");
+			IJ.run(mask,"Dilate","");
+			IJ.run(mask,"Dilate","");
+			IJ.run(mask,"Dilate","");
+			mask.copy();
+			dilatedMask.paste();
 			dilatedMask.show();
+			IJ.run(mask, "Erode","");
+			IJ.run(mask, "Erode","");
+			IJ.run(mask, "Erode","");
+			IJ.run(mask, "Erode","");
 			
+			ImageCalculator ic = new ImageCalculator();
+			innerBoundaryMask=ic.run("xor create",mask,erodedMask);
+			innerBoundaryMask.show();
+		    outerBoundaryMask=ic.run("subtract create",mask,dilatedMask);
+		    outerBoundaryMask.show();
+		   
+		   
 			if(!isBubble)
 			{
 				circleStack.push(currentCircle);
