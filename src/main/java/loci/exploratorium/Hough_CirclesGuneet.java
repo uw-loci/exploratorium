@@ -179,7 +179,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		originalImage.show();
 		IJ.run(originalImage,"8-bit","");
 		int index=0;
-		ImagePlus mask,dilatedMask,erodedMask;
+		ImagePlus mask,dilatedMask,erodedMask,invertedMask;
 		ImagePlus innerBoundary,outerBoundary;
 		ImagePlus innerBoundaryMask,outerBoundaryMask;
 		ImageCalculator imageCalculator=new ImageCalculator();
@@ -190,11 +190,12 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			//mask=IJ.creat
 			erodedMask=IJ.createImage("Mask","8-bit binary",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
 			dilatedMask=IJ.createImage("Mask","8-bit binary",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
+			invertedMask=IJ.createImage("Mask","8-bit binary",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
 			IJ.setForegroundColor(255, 255, 255);
 			IJ.setBackgroundColor(0, 0, 0);
 			mask.show();
+			mask.setTitle(new String("mask"));
 			currentCircle=circlePriorityQueue.remove();
-			boolean isBubble=false;
 			
 			int x,y,r;
 			r=currentCircle.radius;
@@ -209,38 +210,62 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			IJ.run(mask, "Invert","");
 			
 			IJ.run(mask, "Erode","");
-			IJ.run(mask, "Erode","");
-			IJ.run(mask, "Erode","");
-			IJ.run(mask, "Erode","");
 			mask.copy();
 			erodedMask.paste();
 			erodedMask.show();
+			erodedMask.setTitle(new String("Eroded Mask"));
 			
 			//One dilate to counter the Erosion and another dilation for actual dilation from the original mask
-			IJ.run(mask,"Dilate","");
-			IJ.run(mask,"Dilate","");
-			IJ.run(mask,"Dilate","");
-			IJ.run(mask,"Dilate","");
-			IJ.run(mask,"Dilate","");
-			IJ.run(mask,"Dilate","");
 			IJ.run(mask,"Dilate","");
 			IJ.run(mask,"Dilate","");
 			mask.copy();
 			dilatedMask.paste();
 			dilatedMask.show();
-			IJ.run(mask, "Erode","");
-			IJ.run(mask, "Erode","");
-			IJ.run(mask, "Erode","");
+			dilatedMask.setTitle(new String("Dilated Mask"));
 			IJ.run(mask, "Erode","");
 			
 			ImageCalculator ic = new ImageCalculator();
 			innerBoundaryMask=ic.run("xor create",mask,erodedMask);
 			innerBoundaryMask.show();
+			innerBoundaryMask.setTitle(new String("innerBoundaryMask"));
 		    outerBoundaryMask=ic.run("subtract create",mask,dilatedMask);
 		    outerBoundaryMask.show();
+		    outerBoundaryMask.setTitle(new String("outerBoundaryMask"));
 		   
-		   
-			if(!isBubble)
+		    ImagePlus innerBoundaryImage=ic.run("and create", innerBoundaryMask, originalImage);
+		   innerBoundaryImage.show();
+		   innerBoundaryImage.setTitle(new String("innerBoundaryImage"));
+		   ImagePlus outerBoundaryImage=ic.run("and create", outerBoundaryMask, originalImage);
+		    outerBoundaryImage.show();
+		    outerBoundaryImage.setTitle(new String("outerBoundaryMask"));
+		    
+		    mask.copy();
+		    invertedMask.paste();
+		    IJ.run(invertedMask,"Invert","");
+		    ImagePlus maskedImage=ic.run("and create", invertedMask, originalImage);
+		    maskedImage.show();
+		    maskedImage.setTitle(new String("maskedImage"));
+		    
+		    double w=mask.getWidth();
+		    double h=mask.getHeight();
+		    
+		    double innerPixelsNum=getImageMeanValue(innerBoundaryMask)*w*h/255;//because each pixel has value of 255 in mask
+		    double innerPixelsSum=getImageMeanValue(innerBoundaryImage)*w*h;
+		    double meanInnerPixelValue=innerPixelsSum/innerPixelsNum;
+		    
+		    double outerPixelsNum=getImageMeanValue(outerBoundaryMask)*w*h/255;//because each pixel has value of 255 in mask
+		    double outerPixelsSum=getImageMeanValue(outerBoundaryImage)*w*h;
+		    double meanOuterPixelValue=outerPixelsSum/outerPixelsNum;
+		    
+		    double maskPixelsSum=getImageMeanValue(mask)*w*h;
+		    //System.out.println(an.);
+			boolean isBubble=false;//true if currentCircle is a bubble
+			isBubble=meanInnerPixelValue<80||meanOuterPixelValue<80;//Bubble has low mean intensity - if either is less - we declare it as a bubble
+			
+			boolean falseFish=false;
+			//double kurtosis=getImageEntropy(maskedImage);
+			//System.out.println(kurtosis);
+			if(!isBubble&&!falseFish)
 			{
 				circleStack.push(currentCircle);
 			}
@@ -252,6 +277,24 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			circlePriorityQueue.add(circleStack.pop());
 		}
 		
+	}
+	
+	public static double getImageMeanValue(ImagePlus image)
+	{
+		ResultsTable rt=new ResultsTable();
+	    Analyzer an=new Analyzer(image,Analyzer.MEAN,rt);
+	    an.measure();
+	    rt.show("Results");
+	    return rt.getValueAsDouble(1,0);
+	}
+	
+	public static double getImageEntropy(ImagePlus image)
+	{
+		ResultsTable rt=new ResultsTable();
+	    Analyzer an=new Analyzer(image,Analyzer.KURTOSIS,rt);
+	    an.measure();
+	    rt.show("Results");
+	    return rt.getValueAsDouble(1,0);
 	}
 	
 	public static void removeFalseFish()
