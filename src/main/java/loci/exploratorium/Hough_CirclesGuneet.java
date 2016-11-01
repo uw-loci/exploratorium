@@ -870,7 +870,6 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
 		System.setProperty("plugins.dir", pluginsDir);
 
-		
 		//imagePath = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1.jpg";
 		//imagePath = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
 		//imagePath = System.getProperty("user.dir") + "/images/egg1.jpg";
@@ -878,7 +877,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//imagePath = System.getProperty("user.dir") + "/images/Kip1.jpg";
 		
 		//1 Partial Fish
-		//imagePath = System.getProperty("user.dir") + "/images/Kip801.jpg";
+		imagePath = System.getProperty("user.dir") + "/images/Kip801.jpg";
 		
 		//1 Full Fish
 		//imagePath = System.getProperty("user.dir") + "/images/Kip1201.jpg";
@@ -893,7 +892,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//imagePath = System.getProperty("user.dir") + "/images/Kip2401.jpg";
 				
 		//Nothing
-		imagePath = System.getProperty("user.dir") + "/images/Kip1601.jpg";
+		//imagePath = System.getPropertsy("user.dir") + "/images/Kip1601.jpg";
 				
 		
 		originalImage = IJ.openImage(imagePath );
