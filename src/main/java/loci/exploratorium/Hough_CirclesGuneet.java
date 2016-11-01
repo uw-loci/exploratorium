@@ -898,34 +898,31 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//1 Partial fish and shell
 		//imagePath = System.getProperty("user.dir") + "/images/Kip2401.jpg";
 				
-		//Nothing
+		//Nothing in image
 		//imagePath = System.getPropertsy("user.dir") + "/images/Kip1601.jpg";
 				
-		
 		originalImage = IJ.openImage(imagePath );
 		originalImage.show();
 		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
 		
 		image = IJ.openImage(imagePath );
-		image.show();
-		IJ.run("8-bit");
-		IJ.run("Smooth");
-		IJ.run("Find Edges");
+		//image.show();
+		IJ.run(image,"8-bit","");
+		IJ.run(image,"Smooth","");
+		IJ.run(image,"Find Edges","");
 		IJ.setAutoThreshold(image,"Default dark");
 		IJ.run(image, "Convert to Mask", "");
-		IJ.run("Dilate");
-		IJ.run("Dilate");
-		IJ.run("Dilate");
-		IJ.run("Fill Holes");
-		IJ.run("Erode");
-		IJ.run("Erode");
-		IJ.run("Erode");
-		IJ.run("Outline");
-		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
+		IJ.run(image,"Dilate","");
+		IJ.run(image,"Dilate","");
+		IJ.run(image,"Dilate","");
+		IJ.run(image,"Fill Holes","");
+		IJ.run(image,"Erode","");
+		IJ.run(image,"Erode","");
+		IJ.run(image,"Erode","");
+		IJ.run(image,"Outline","");
+		IJ.run(image,"Size...", "width=200 height=129 constrain average interpolation=Bilinear");
+		image.show();
 		// run the plugin
-		PriorityQueue<Integer> pq=new PriorityQueue<Integer>(3,Collections.reverseOrder());
-
 		IJ.runPlugIn(clazz.getName(), "");
-		
 	}
 }
