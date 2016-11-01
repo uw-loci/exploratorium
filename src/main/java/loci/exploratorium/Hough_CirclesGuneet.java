@@ -1,13 +1,26 @@
 package loci.exploratorium;
 
-/** Hough_Circles10.java:
-22.2.2007
- by Norbert Vischer,
-based on  work by:
-
-Hemerson Pistori (pistori@ec.ucdb.br) and Eduardo Rocha Costa
-and
- Mark A. Schulze applet (http://www.markschulze.net/)
+/**
+ * This ImageJ plugin shows the Hough Transform Space and search for circles in
+ * a binary image. The image must have been passed through an edge detection
+ * module and have edges marked in white (background must be in black). Input
+ * image should go through "8-bit", "Smooth", "Find Edges", "Auto Threshold -
+ * method=Default white", and "Size... - width=200 height=129 constrain average
+ * interpolation=Bilinear". MorphoLibJ ImageJ plugin should be included in the 
+ * Java Build Path for morphological filters required in this plugin.
+ * <p>
+ * Work based on Hough_Circles10.java by Norbert Vischer (https://goo.gl/YR4m5A)
+ * created on Feb 22, 2007, that originally based on the version by 
+ * Hemerson Pistori and Eduardo Rocha Costa created on Mar 18 2004, 
+ * based on Mark A. Schulze applet (http://www.markschulze.net/).
+ * </p>
+ * <p>
+ * Latest version by Guneet Singh Mehta and Bing Dai created on Oct 27 2016.
+ * </p>
+ * 
+ * @author Hemerson Pistori (pistori@ec.ucdb.br) and Eduardo Rocha Costa
+ * @author Norbert Vischer
+ * @author Guneet Singh Mehta (gmehta2@wisc.edu) and Bing Dai (bdai6@wisc.edu)
  */
 
 //package sigus.templateMatching;
@@ -31,12 +44,6 @@ import ij.measure.*;
 import ij.plugin.frame.*;
 import ij.process.*;
 
-/**
- *   This ImageJ plugin shows the Hough Transform Space and search for
- *   circles in a binary image. The image must have been passed through
- *   an edge detection module and have edges marked in white (background
- *   must be in black).
- */
 class circle
 {
 	int centerX;
