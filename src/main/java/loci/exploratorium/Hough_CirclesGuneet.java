@@ -67,6 +67,12 @@ class circle
 		}
 		return false;
 	}
+	public void resize(float factor)
+	{
+		this.centerX=(int) (this.centerX*factor);
+		this.centerY=(int) (this.centerY*factor);
+		this.radius=(int) (this.radius*factor);
+	}
 }
 public class Hough_CirclesGuneet implements PlugInFilter {
 
@@ -105,6 +111,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 	//private static RoiManager roiManager=new RoiManager();
 	private static RoiManager roiManager=new RoiManager(false);
 	public static PriorityQueue<circle> circlePriorityQueue;
+	public static float downSizeFactor;
 
 	public int setup(String arg, ImagePlus imp) {
 		if (arg.equals("about")) {
@@ -185,7 +192,6 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		Stack<circle> circleStack=new Stack<circle>();
 		circle currentCircle;
 		originalImage.show();
-		IJ.run(originalImage,"8-bit","");
 		int index=0;
 		ImagePlus mask,dilatedMask,erodedMask,invertedMask;
 		ImagePlus innerBoundary,outerBoundary;
@@ -680,6 +686,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		while(!circlePriorityQueue.isEmpty())
 		{
 			circle currentCircle=circlePriorityQueue.remove();
+			currentCircle.resize(downSizeFactor);
 			int radius=currentCircle.radius;
 			originalImage.setRoi(new OvalRoi(currentCircle.centerX-radius,currentCircle.centerY-radius,2*radius,2*radius));
 	        IJ.run("Overlay Options...", "stroke=red width=3 fill=none apply");
@@ -907,7 +914,9 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 				
 		originalImage = IJ.openImage(imagePath );
 		//originalImage.show();
-		IJ.run(originalImage,"Size...", "width=200 height=129 constrain average interpolation=Bilinear");
+		//IJ.run(originalImage,"Size...", "width=200 height=129 constrain average interpolation=Bilinear");
+		downSizeFactor=originalImage.getWidth()/(float)200;
+		//IJ.run(originalImage,"Size...", "width=200 constrain average interpolation=Bilinear");
 		
 		image = IJ.openImage(imagePath );
 		//image.show();
