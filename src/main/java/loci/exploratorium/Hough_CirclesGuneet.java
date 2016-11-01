@@ -921,8 +921,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		IJ.run(image,"Erode","");
 		IJ.run(image,"Outline","");
 		IJ.run(image,"Size...", "width=200 height=129 constrain average interpolation=Bilinear");
-		image.show();
+		//image.show();
 		// run the plugin
-		IJ.runPlugIn(clazz.getName(), "");
+		IJ.runPlugIn(image,clazz.getName(), "");
 	}
 }
