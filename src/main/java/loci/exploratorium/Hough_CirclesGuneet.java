@@ -102,7 +102,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 	int lut[][][]; // LookUp Table for rsin e rcos values
 	public static ImagePlus image,originalImage;
 	public static String imagePath;
-	private static RoiManager roiManager=new RoiManager();
+	//private static RoiManager roiManager=new RoiManager();
+	private static RoiManager roiManager=new RoiManager(false);
 	public static PriorityQueue<circle> circlePriorityQueue;
 
 	public int setup(String arg, ImagePlus imp) {
@@ -172,6 +173,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 				//new ImagePlus("Hough Space [r="+radiusMin+"]", newip).show(); // Shows only the hough space for the minimun radius
 				//new ImagePlus(maxCircles+" Circles Found", circlesip).show();
 			}
+			originalImage.show();
 		}
 	}
 
@@ -199,7 +201,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			invertedMask=IJ.createImage("Mask","8-bit binary",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
 			IJ.setForegroundColor(255, 255, 255);
 			IJ.setBackgroundColor(0, 0, 0);
-			mask.show();//have to show to persist the image - and then close - find a way to avoid show
+			//mask.show();//have to show to persist the image - and then close - find a way to avoid show
 			mask.setTitle(new String("mask"));
 			currentCircle=circlePriorityQueue.remove();
 			
@@ -220,7 +222,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			IJ.run(mask, "Erode","");
 			mask.copy();
 			erodedMask.paste();
-			erodedMask.show();
+			//erodedMask.show();
 			erodedMask.setTitle(new String("Eroded Mask"));
 
 			
@@ -233,7 +235,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			IJ.run(mask,"Dilate","");
 			mask.copy();
 			dilatedMask.paste();
-			dilatedMask.show();
+			//dilatedMask.show();
 			dilatedMask.setTitle(new String("Dilated Mask"));
 			
 			IJ.run(mask, "Erode","");
@@ -242,29 +244,29 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			
 			ImageCalculator ic = new ImageCalculator();
 			innerBoundaryMask=ic.run("xor create",mask,erodedMask);
-			innerBoundaryMask.show();
+			//innerBoundaryMask.show();
 			innerBoundaryMask.setTitle(new String("innerBoundaryMask"));
 			
 			
 		    outerBoundaryMask=ic.run("subtract create",mask,dilatedMask);
-		    outerBoundaryMask.show();
+		    //outerBoundaryMask.show();
 		    outerBoundaryMask.setTitle(new String("outerBoundaryMask"));
 		    
 		    
 		    ImagePlus innerBoundaryImage=ic.run("and create", innerBoundaryMask, originalImage);
-		   innerBoundaryImage.show();
+		   //innerBoundaryImage.show();
 		   innerBoundaryImage.setTitle(new String("innerBoundaryImage"));
 		   
 		   
 		   ImagePlus outerBoundaryImage=ic.run("and create", outerBoundaryMask, originalImage);
-		    outerBoundaryImage.show();
+		    //outerBoundaryImage.show();
 		    outerBoundaryImage.setTitle(new String("outerBoundaryMask"));
 		     
 		    mask.copy();
 		    invertedMask.paste();
 		    IJ.run(invertedMask,"Invert","");
 		    ImagePlus maskedImage=ic.run("and create", invertedMask, originalImage);
-		    maskedImage.show();
+		    //maskedImage.show();
 		    maskedImage.setTitle(new String("maskedImage"));
 
 		    double w=mask.getWidth();
@@ -285,12 +287,12 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			ImagePlus maskFishInterior=IJ.createImage("Mask","8-bit binary",originalImage.getWidth(),originalImage.getHeight(),originalImage.getChannel());
 			erodedMask.copy();
 			maskFishInterior.paste();
-			maskFishInterior.show();
+			//maskFishInterior.show();
 			IJ.run(maskFishInterior, "Erode","");
 			IJ.run(maskFishInterior, "Erode","");
 			IJ.run(maskFishInterior,"Invert","");
 			ImagePlus fishInteriorImage=ic.run("and create", maskFishInterior, image);
-			fishInteriorImage.show();
+			//fishInteriorImage.show();
 			fishInteriorImage.setTitle("Fish Interior");
 			
 			double edgeMeanValue=getImageMeanValue(fishInteriorImage);
@@ -303,6 +305,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			index++;
 			
 			//closing all figures
+			/*
 			mask.close();
 			erodedMask.close();
 			dilatedMask.close();
@@ -313,6 +316,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			maskedImage.close ();
 			maskFishInterior.close();
 			fishInteriorImage.close();
+			*/
 		}
 		while(!circleStack.isEmpty())
 		{
@@ -392,7 +396,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 
 		//gd.addCheckbox("Show output images", true); //n_ 
 
-		gd.showDialog();
+		//gd.showDialog();
 
 		if (gd.wasCanceled()) {
 			return(false);
@@ -902,8 +906,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//imagePath = System.getPropertsy("user.dir") + "/images/Kip1601.jpg";
 				
 		originalImage = IJ.openImage(imagePath );
-		originalImage.show();
-		IJ.run("Size...", "width=200 height=129 constrain average interpolation=Bilinear");
+		//originalImage.show();
+		IJ.run(originalImage,"Size...", "width=200 height=129 constrain average interpolation=Bilinear");
 		
 		image = IJ.openImage(imagePath );
 		//image.show();
