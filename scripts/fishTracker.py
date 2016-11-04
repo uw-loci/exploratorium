@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Spyder Editor
-
-This is a temporary script file.
+Python code to detect fish eggs with OpenCV circular Hough transform function.
+V1.0 Nov 4th, 2016
+@Author: Bing Dai (bdai6@wisc.edu)
 """
 
 import cv2
@@ -10,17 +10,17 @@ import argparse
 import numpy as np
 
 # construct the argument parser and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--image", required = True, help = "Path to the image")
-args = vars(ap.parse_args())
-
-# load the image, clone it for output, and then convert it to grayscale
-img = cv2.imread(args["image"])
-output = img.copy()
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#ap = argparse.ArgumentParser()
+#ap.add_argument("-i", "--image", required = True, help = "Path to the image")
+#args = vars(ap.parse_args())
+#
+## load the image, clone it for output, and then convert it to grayscale
+#img = cv2.imread(args["image"])
+#output = img.copy()
+#gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # import image as grayscale
-img = cv2.imread('images/junkfinder_25x_dic_frame1.jpg',0)
+img = cv2.imread('../images/junkfinder_25x_dic_frame1.jpg',0)
 #img = cv2.imread('images/Kip2201.jpg',0)
 #img = cv2.medianBlur(img,5)
 #cv2.imshow('original image',img)
@@ -34,8 +34,6 @@ dim = (200, int(img.shape[0] * r))
 # perform the actual resizing of the image and show it
 resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 #cv2.imshow("resized", resized)
-
-#cimg = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
 
 #circles = cv2.HoughCircles(resized,cv2.HOUGH_GRADIENT,1,50,
 #                            param1=50,param2=30,minRadius=10,maxRadius=30)
