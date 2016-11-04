@@ -38,6 +38,18 @@ resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
 #cv2.imshow("resized", resized)
 
 # Detect circles (fish eggs) in the image
+"""
+cv2.HoughCircles(image, method, dp, minDist)
+
+image: 8-bit, single channel image. If working with a color image, convert to grayscale first.
+method: Defines the method to detect circles in images. Currently, the only implemented method is cv2.HOUGH_GRADIENT, which corresponds to the Yuen et al. paper.
+dp: This parameter is the inverse ratio of the accumulator resolution to the image resolution (see Yuen et al. for more details). Essentially, the larger the dp gets, the smaller the accumulator array gets.
+minDist: Minimum distance between the center (x, y) coordinates of detected circles. If the minDist is too small, multiple circles in the same neighborhood as the original may be (falsely) detected. If the minDist is too large, then some circles may not be detected at all.
+param1: Gradient value used to handle edge detection in the Yuen et al. method.
+param2: Accumulator threshold value for the cv2.HOUGH_GRADIENT method. The smaller the threshold is, the more circles will be detected (including false circles). The larger the threshold is, the more circles will potentially be returned.
+minRadius: Minimum size of the radius (in pixels).
+maxRadius: Maximum size of the radius (in pixels).
+"""
 #circles = cv2.HoughCircles(resized,cv2.HOUGH_GRADIENT,1,50,
 #                            param1=50,param2=30,minRadius=10,maxRadius=30)
 circles = cv2.HoughCircles(resized,cv2.HOUGH_GRADIENT,1,50,
