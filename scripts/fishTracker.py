@@ -8,8 +8,9 @@ V1.0 Nov 4th, 2016
 import cv2
 import argparse
 import numpy as np
+import timeit
 
-"""
+
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required = True, help = "Path to the image")
@@ -18,13 +19,15 @@ args = vars(ap.parse_args())
 # load the image, clone it for output, and then convert it to grayscale
 img = cv2.imread(args["image"])
 output = img.copy()
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-"""
+#gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+
+start = timeit.timeit()  # start timing
 
 # import image
 #img = cv2.imread('../images/junkfinder_25x_dic_frame1.jpg')  # 3 eggs
 #img = cv2.imread('../images/Kip2201.jpg')  # 1.5 eggs
-img = cv2.imread('../images/bubble3.jpg')  # air bubbles
+#img = cv2.imread('../images/bubble3.jpg')  # air bubbles
 #output = img.copy()
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # convert to grayscale
 #img = cv2.medianBlur(img,5)
@@ -100,3 +103,6 @@ if circles is not None:
     cv2.destroyAllWindows()
 else:
     print 'No Eggs Found'
+
+end = timeit.timeit()
+print 'Time (seconds) to process one image:', end-start
