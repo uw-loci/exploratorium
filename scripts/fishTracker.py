@@ -9,15 +9,17 @@ import cv2
 import argparse
 import numpy as np
 
+"""
 # construct the argument parser and parse the arguments
-#ap = argparse.ArgumentParser()
-#ap.add_argument("-i", "--image", required = True, help = "Path to the image")
-#args = vars(ap.parse_args())
-#
-## load the image, clone it for output, and then convert it to grayscale
-#img = cv2.imread(args["image"])
-#output = img.copy()
-#gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--image", required = True, help = "Path to the image")
+args = vars(ap.parse_args())
+
+# load the image, clone it for output, and then convert it to grayscale
+img = cv2.imread(args["image"])
+output = img.copy()
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+"""
 
 # import image
 #img = cv2.imread('../images/junkfinder_25x_dic_frame1.jpg')  # 3 eggs
@@ -28,16 +30,35 @@ gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # convert to grayscale
 #img = cv2.medianBlur(img,5)
 #cv2.imshow('original image',img)
 
-# shrink image size to make the computation faster
-# Calculate the ratio of the new image to the old image
+#Shrink image size to accelarate computation. Only works for grayscale image.
+# Calculate the ratio of the new image to the original image
 # make sure the aspect ratio doesn't change
-ratio = 200.0 / img.shape[1]
-dim = (200, int(img.shape[0] * ratio))
+resizeRatio = 200.0 / img.shape[1]  # scale image width to 200 pixels
+dim = (200, int(img.shape[0] * resizeRatio))
 # perform the actual resizing of the image
 resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
 #cv2.imshow("resized", resized)
 
+#retval,BW = cv2.threshold(resized,127,255,cv2.THRESH_BINARY)
+#cv2.imshow("binary",BW)
+
 # Detect circles (fish eggs) in the image
+def checkforBubbles(imageIn, circlesIn, threshold):
+    "Eliminate false positives (air bubbles, debris, etc) from results. Basic idea is to get a binary mask around edge of circles and check if the inner boundary is dark - if dark then bubbles."
+    circlesOut = np.uint16(np.zeros(circlesIn.shape))
+    # Create a dummy BW image of the same size as original image imgIn
+    retval,BW = cv2.threshold(imageIn,127,255,cv2.THRESH_BINARY)
+    # set all pixels of BW inside hough circle to 1, otherwise 0
+    # Creates a r=2 disk structuring element
+    # apply erosion on the BW and generate a tmp image
+    # generate a ring (= BW - tmp) that only the pixels on the Hough circle edge are 1
+    # apply ring as a binary mask on imgIn to get imageTmp
+    # calculate the mean value of imageTmp
+    # if meanValue > bubbleThreshold then it means features on the inner boundary are not black, then keep the data point; 
+    # otherwise remove it
+    # update the results
+    return circlesOut;
+    
 """
 cv2.HoughCircles(image, method, dp, minDist)
 
@@ -60,16 +81,20 @@ if circles is not None:
     # convert the (x, y) coordinates and radius of the circles to integers
     circles = np.uint16(np.around(circles))
     
-    for i in circles[0,:]:
+    for circle in circles[0,:]:
         # convert center and radius back to original image scale
-        (x,y,r)= np.uint16(np.around(np.dot(i,1/ratio)))
+        (x,y,r)= np.uint16(np.around(np.dot(circle,1/resizeRatio)))
         # draw the outer circle on original image
         print 'Center:',x,y,'Radius:',r
-        cv2.circle(img,(x,y),r,(0,255,128),2)
+        cv2.circle(img,(x,y),r,(0,0,255),4)
         # draw the center of the circle
-        cv2.circle(img,(x,y),2,(0,128,255),3)
+        cv2.circle(img,(x,y),2,(0,128,255),5)
+
+#        cv2.circle(BW,(circle[0],circle[1]),circle[2],(255,255,255),4)
+#        cv2.circle(BW,(circle[0],circle[1]),2,(0,128,255),5)
 
     cv2.imshow('detected fish eggs',img)
+#    cv2.imshow('Marks on BW image',BW)
 #    cv2.imshow('detected fish eggs',np.hstack([img, output]))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
