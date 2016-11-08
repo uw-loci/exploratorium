@@ -67,7 +67,8 @@ def checkforBubbles(imageIn, circlesIn, threshold):
         #print "mask weight:",np.sum(mask), "mask maximum:",np.max(mask)
     #    cv2.imshow('mask', mask)
         # Apply the mask to input Image to keep only the pixels on the Hough circle boundary unchanged
-        ring = cv2.bitwise_and(imageIn,mask)
+        #ring = cv2.bitwise_and(imageIn,mask)
+        ring = cv2.bitwise_and(imageIn, imageIn, mask=mask)
     #    cv2.imshow('result',test)
         # calculate the mean value of imageTmp
         averagePixelWeight = np.sum(ring)/np.sum(mask/255) # set mask max pixel value to 1
