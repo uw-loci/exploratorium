@@ -25,10 +25,10 @@ output = img.copy()
 start = timeit.timeit()  # start timing
 
 # import image
-#img = cv2.imread('../images/junkfinder_25x_dic_frame1.jpg')  # 3 eggs
+img = cv2.imread('../images/junkfinder_25x_dic_frame1.jpg')  # 3 eggs
 #img = cv2.imread('../images/fish2.jpg')  # 4 eggs. need to reduce minRadius to 25
 #img = cv2.imread('../images/Kip2201.jpg')  # 1.5 eggs
-img = cv2.imread('../images/Kip1401.jpg')  # air bubble that cannot be eliminated
+#img = cv2.imread('../images/Kip1401.jpg')  # air bubble that cannot be eliminated
 #img = cv2.imread('../images/bubble2.jpg')  # air bubbles
 #img = cv2.imread('../images/bubble3.jpg')  # air bubbles
 #output = img.copy()
@@ -50,21 +50,43 @@ resized = cv2.resize(gray, dim, interpolation = cv2.INTER_AREA)
 # Detect circles (fish eggs) in the image
 def checkforBubbles(imageIn, circlesIn, threshold):
     "Eliminate false positives (air bubbles, debris, etc) from results. Basic idea is to get a binary mask around edge of circles and check if the inner boundary is dark - if dark then bubbles."
-    circlesOut = np.uint16(np.zeros(circlesIn.shape))
-    
-    # Create a dummy BW image of the same size as original image imgIn
-    retval,BW = cv2.threshold(imageIn,127,255,cv2.THRESH_BINARY)
-    # set all pixels of BW inside hough circle to 1, otherwise 0
-    BW = np.zeros(imageIn.shape, dtype="unit8")
-    # Creates a r=2 disk structuring element
-    # apply erosion on the BW and generate a tmp image
-    # generate a ring (= BW - tmp) that only the pixels on the Hough circle edge are 1
-    # apply ring as a binary mask on imgIn to get imageTmp
-    # calculate the mean value of imageTmp
-    # if meanValue > bubbleThreshold then it means features on the inner boundary are not black, then keep the data point; 
-    # otherwise remove it
-    # update the results
-    return circlesOut;
+    # initialize
+    circlesFiltered = np.uint16(np.zeros(circlesIn.shape))
+    eggNum = 0
+   
+    for circle in circlesIn[0,:]:
+        mask = np.zeros(imageIn.shape,dtype="uint8")
+        # set all pixels inside the Hough circle to 1, otherwise 0
+        cv2.circle(mask,(circle[0],circle[1]),circle[2],white,-1)
+        #retval,mask = cv2.threshold(tmp,10,255,cv2.THRESH_BINARY)
+        se = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))  # circular structure element with radius 2
+        eroded = cv2.erode(mask,se,iterations = 1)   # apply erosion on the BW and generate a tmp image
+     #   cv2.imshow('eroded',eroded)
+        # generate a ring-shaped mask
+        mask = cv2.bitwise_xor(mask,eroded) # only edge pixels of the circle remain unchnaged.
+        #print "mask weight:",np.sum(mask), "mask maximum:",np.max(mask)
+    #    cv2.imshow('mask', mask)
+        # Apply the mask to input Image to keep only the pixels on the Hough circle boundary unchanged
+        ring = cv2.bitwise_and(imageIn,mask)
+    #    cv2.imshow('result',test)
+        # calculate the mean value of imageTmp
+        averagePixelWeight = np.sum(ring)/np.sum(mask/255) # set mask max pixel value to 1
+        print "Average pixel weight:",averagePixelWeight
+        # features on the inner boundary are not black then keep the data point
+        if averagePixelWeight > threshold:
+            circlesFiltered[0,eggNum,] = circle
+            eggNum +=1
+            print "Circle #", eggNum, "is a fish egg."    
+        else:
+            print "Circle #", eggNum, "is an air bubble."    
+    print "Found",eggNum, "fish eggs."
+
+    # remove all rows with zero values
+    # np.all() in this case reduces the 3D array (1,n,3) to (n,3)
+    # Use np.array() to change it back to (1,n,3) shape but caused error in line (x,y,r) = ...
+    #circlesFiltered = np.array(circlesFiltered[~np.all(circlesFiltered==0, axis=2)],dtype="uint16")  # disabled until figure out the issue...
+    fishEggs = circlesFiltered[~np.all(circlesFiltered==0, axis=2)]  
+    return fishEggs;
     
 """
 cv2.HoughCircles(image, method, dp, minDist)
@@ -92,6 +114,10 @@ red = (0,0,255)
 if circles is not None:
     # convert the (x, y) coordinates and radius of the circles to integers
     circles = np.uint16(np.around(circles))  # (column #, row #, radius)
+    threshold = 70
+    # eliminate air bubbles from the results
+    fishEggs = checkforBubbles(resized, circles, threshold)
+    """
     # initialize
     #circlesFiltered = np.uint16(np.empty(circles.shape))
     circlesFiltered = np.uint16(np.zeros(circles.shape))
@@ -127,7 +153,7 @@ if circles is not None:
     # Use np.array() to change it back to (1,n,3) shape but caused error in line (x,y,r) = ...
     #circlesFiltered = np.array(circlesFiltered[~np.all(circlesFiltered==0, axis=2)],dtype="uint16")  # disabled until figure out the issue...
     fishEggs = circlesFiltered[~np.all(circlesFiltered==0, axis=2)]  
-   
+    """
     # ensure at least some fish eggs were found
     if fishEggs.shape[0] > 0:    
         for fishEgg in fishEggs:
