@@ -26,8 +26,10 @@ start = timeit.timeit()  # start timing
 
 # import image
 #img = cv2.imread('../images/junkfinder_25x_dic_frame1.jpg')  # 3 eggs
+#img = cv2.imread('../images/fish2.jpg')  # 4 eggs. need to reduce minRadius to 25
 #img = cv2.imread('../images/Kip2201.jpg')  # 1.5 eggs
-img = cv2.imread('../images/bubble2.jpg')  # air bubbles
+img = cv2.imread('../images/Kip1401.jpg')  # air bubble that cannot be eliminated
+#img = cv2.imread('../images/bubble2.jpg')  # air bubbles
 #img = cv2.imread('../images/bubble3.jpg')  # air bubbles
 #output = img.copy()
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # convert to grayscale
@@ -78,8 +80,9 @@ maxRadius: Maximum size of the radius (in pixels).
 """
 #circles = cv2.HoughCircles(resized,cv2.HOUGH_GRADIENT,1,50,
 #                            param1=50,param2=30,minRadius=10,maxRadius=30)
-circles = cv2.HoughCircles(resized,cv2.HOUGH_GRADIENT,1,50,
-                            param1=50,param2=30,minRadius=35,maxRadius=50)
+# circles is a 3D numpy array whose shpae is (1, n, 3) 
+# i.e., (datatype, number of circles detected, x/y/radius of the circle)
+circles = cv2.HoughCircles(resized,cv2.HOUGH_GRADIENT,1,50, param1=50,param2=30,minRadius=35,maxRadius=50)
 # BGR colors
 white = (255,255,255)
 red = (0,0,255)
@@ -90,7 +93,8 @@ if circles is not None:
     # convert the (x, y) coordinates and radius of the circles to integers
     circles = np.uint16(np.around(circles))  # (column #, row #, radius)
     # initialize
-    circlesFiltered = np.uint16(np.empty(circles.shape))
+    #circlesFiltered = np.uint16(np.empty(circles.shape))
+    circlesFiltered = np.uint16(np.zeros(circles.shape))
     threshold = 70
     eggNum = 0
     for circle in circles[0,:]:
@@ -107,8 +111,9 @@ if circles is not None:
         ring = cv2.bitwise_and(resized,mask)
     #    cv2.imshow('result',test)
     #    cv2.waitKey(0)
-        averagePixelWeight = np.sum(ring)/np.sum(mask/255)
+        averagePixelWeight = np.sum(ring)/np.sum(mask/255) # set mask max pixel value to 1
         print "Average pixel weight:",averagePixelWeight
+        # features on the inner boundary are not black
         if averagePixelWeight > threshold:
             circlesFiltered[0,eggNum,] = circle
             eggNum +=1
@@ -116,25 +121,32 @@ if circles is not None:
         else:
             print "Circle #", eggNum, "is an air bubble."    
     print "Found",eggNum, "fish eggs."
+
+    # remove all rows with zero values
+    # np.all() in this case reduces the 3D array (1,n,3) to (n,3)
+    # Use np.array() to change it back to (1,n,3) shape but caused error in line (x,y,r) = ...
+    #circlesFiltered = np.array(circlesFiltered[~np.all(circlesFiltered==0, axis=2)],dtype="uint16")  # disabled until figure out the issue...
+    fishEggs = circlesFiltered[~np.all(circlesFiltered==0, axis=2)]  
+   
+    # ensure at least some fish eggs were found
+    if fishEggs.shape[0] > 0:    
+        for fishEgg in fishEggs:
+            # convert center and radius back to original image scale
+            (x,y,r) = np.uint16(np.around(np.dot(fishEgg, 1/resizeRatio)))  # column #, row #, radius
+            # draw the outer circle on original image
+            print 'Center:',x,y,'Radius:',r
+            cv2.circle(img,(x,y),r,red,4)
+            # draw the center of the circle
+            cv2.circle(img,(x,y),2,red,5)
+
+        cv2.imshow('detected fish eggs',img)
+        #cv2.imshow('Marks on BW image',BW)
+        #cv2.imshow('detected fish eggs',np.hstack([img, output]))
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
 else:
     print 'No eggs found!'
-
-# ensure at least some fish eggs were found
-if circlesFiltered is not None:    
-    for fishEgg in circlesFiltered[0,:]:
-        # convert center and radius back to original image scale
-        (x,y,r)= np.uint16(np.around(np.dot(fishEgg,1/resizeRatio)))  # column #, row #, radius
-        # draw the outer circle on original image
-        print 'Center:',x,y,'Radius:',r
-        cv2.circle(img,(x,y),r,red,4)
-        # draw the center of the circle
-        cv2.circle(img,(x,y),2,red,5)
-
-    cv2.imshow('detected fish eggs',img)
-#    cv2.imshow('Marks on BW image',BW)
-#    cv2.imshow('detected fish eggs',np.hstack([img, output]))
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
 end = timeit.timeit()
 print 'Time (seconds) to process one image:', end-start
