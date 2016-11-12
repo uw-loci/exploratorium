@@ -44,38 +44,39 @@ import ij.measure.*;
 import ij.plugin.frame.*;
 import ij.process.*;
 
-class circle
-{
-	int centerX;
-	int centerY;
-	int radius;
-	int houghValue;
-	public circle(int x,int y,int r,int val)
-	{
-		this.centerX=x;
-		this.centerY=y;
-		this.radius=r;
-		this.houghValue=val;
-	}
-	public boolean intersect(circle other)
-	{
-		double tolerance=0.80;//tolerance of overlap
-		double dist=Math.sqrt(Math.pow(this.centerX-other.centerX, 2)+(Math.pow(this.centerY-other.centerY, 2)));
-		if(dist<tolerance*(this.radius+other.radius))
-		{
-			return true;
-		}
-		return false;
-	}
-	public void resize(float factor)
-	{
-		this.centerX=(int) (this.centerX*factor);
-		this.centerY=(int) (this.centerY*factor);
-		this.radius=(int) (this.radius*factor);
-	}
-}
-public class Hough_CirclesGuneet implements PlugInFilter {
 
+public class HoughAdultFish implements PlugInFilter {
+	class circle
+	{
+		int centerX;
+		int centerY;
+		int radius;
+		int houghValue;
+		public circle(int x,int y,int r,int val)
+		{
+			this.centerX=x;
+			this.centerY=y;
+			this.radius=r;
+			this.houghValue=val;
+		}
+		public boolean intersect(circle other)
+		{
+			double tolerance=0.80;//tolerance of overlap
+			double dist=Math.sqrt(Math.pow(this.centerX-other.centerX, 2)+(Math.pow(this.centerY-other.centerY, 2)));
+			if(dist<tolerance*(this.radius+other.radius))
+			{
+				return true;
+			}
+			return false;
+		}
+		public void resize(float factor)
+		{
+			this.centerX=(int) (this.centerX*factor);
+			this.centerY=(int) (this.centerY*factor);
+			this.radius=(int) (this.radius*factor);
+		}
+	}
+	
 	public int radiusMin;  // Find circles with radius grater or equal radiusMin
 	public int radiusMax;  // Find circles with radius less or equal radiusMax
 	public int radiusInc;  // Increment used to go from radiusMin to radiusMax
@@ -106,7 +107,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 	private int vectorMaxSize = 500;
 	boolean useThreshold = false;
 	int lut[][][]; // LookUp Table for rsin e rcos values
-	public static ImagePlus image,originalImage;
+	public static ImagePlus image,originalImage,edgeImage,originalImageFullSize;
 	public static String imagePath;
 	//private static RoiManager roiManager=new RoiManager();
 	private static RoiManager roiManager=new RoiManager(false);
@@ -299,30 +300,18 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			IJ.run(maskFishInterior,"Invert","");
 			ImagePlus fishInteriorImage=ic.run("and create", maskFishInterior, image);
 			//fishInteriorImage.show();
-			fishInteriorImage.setTitle("Fish Interior");
+			//fishInteriorImage.setTitle("Fish Interior");
+			
+			ImagePlus edgeImageFishInterior=IJ.createImage("Mark","8-bit binary",edgeImage.getWidth(),edgeImage.getHeight(),edgeImage.getChannel());
 			
 			double edgeMeanValue=getImageMeanValue(fishInteriorImage);
-			//System.out.println(kurtosis);
 			if(!isBubble&&!falseFish)
 			{
 				circleStack.push(currentCircle);
 			}
 			roiManager.runCommand(mask,"DeSelect");
 			index++;
-			
-			//closing all figures
-			/*
-			mask.close();
-			erodedMask.close();
-			dilatedMask.close();
-			innerBoundaryMask.close();
-			outerBoundaryMask.close();
-			innerBoundaryImage.close();
-			outerBoundaryImage.close();
-			maskedImage.close ();
-			maskFishInterior.close();
-			fishInteriorImage.close();
-			*/
+
 		}
 		while(!circleStack.isEmpty())
 		{
@@ -393,7 +382,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 
 		GenericDialog gd = new GenericDialog("Hough Parameters", IJ.getInstance());
 		gd.addNumericField("Min_Radius (in pixels):", 35, 0);
-		gd.addNumericField("Max_Radius (in pixels):", 45, 0);
+		gd.addNumericField("Max_Radius (in pixels):", 55, 0);
 		gd.addNumericField("Step_Radius (in pixels):", 2, 0);
 		gd.addNumericField("Number_of_Circles (NC): (enter 0 if using threshold)", 10, 0);
 		gd.addNumericField("Threshold: (not used if NC > 0)", 60, 0);
@@ -612,6 +601,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 			}
 		}
 	}
+	
 	public int findIntersectionNumberAndClosestCircle(circle intersectingCircle,circle currentCircle)
 	{
 		int ans=0;
@@ -686,8 +676,14 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		while(!circlePriorityQueue.isEmpty())
 		{
 			circle currentCircle=circlePriorityQueue.remove();
-			currentCircle.resize(downSizeFactor);
+			//System.out.format("before %d %d %d\n",currentCircle.centerX,currentCircle.centerY,currentCircle.radius);
 			int radius=currentCircle.radius;
+			//image.setRoi(new OvalRoi(currentCircle.centerX-radius,currentCircle.centerY-radius,2*radius,2*radius));
+			//IJ.run("Overlay Options...", "stroke=red width=3 fill=none apply");
+			//IJ.run(image, "Add Selection...", "");
+			
+			currentCircle.resize(downSizeFactor);
+			radius=currentCircle.radius;
 			originalImage.setRoi(new OvalRoi(currentCircle.centerX-radius,currentCircle.centerY-radius,2*radius,2*radius));
 	        IJ.run("Overlay Options...", "stroke=red width=3 fill=none apply");
 	        IJ.run(originalImage, "Add Selection...", "");
@@ -883,7 +879,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 
 	public static void main(String[] args) {
 		// set the plugins.dir property to make the plugin appear in the Plugins menu
-		Class<?> clazz = Hough_CirclesGuneet.class;
+		Class<?> clazz = HoughAdultFish.class;
 		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
 		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
 		System.setProperty("plugins.dir", pluginsDir);
@@ -895,8 +891,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//imagePath = System.getProperty("user.dir") + "/images/Kip1.jpg";
 		
 		//1 Partial Fish
-		imagePath = System.getProperty("user.dir") + "/images/Kip801.jpg";
-		imagePath = System.getProperty("user.dir") + "/images/18121.jpg";
+		//imagePath = System.getProperty("user.dir") + "/images/Kip801.jpg";
+		
 		//1 Full Fish
 		//imagePath = System.getProperty("user.dir") + "/images/Kip1201.jpg";
 		
@@ -912,17 +908,28 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//Nothing in image
 		//imagePath = System.getPropertsy("user.dir") + "/images/Kip1601.jpg";
 				
+		//Adult fish
+		imagePath = System.getProperty("user.dir") + "/images/18121.jpg";
+		
+		originalImageFullSize = IJ.openImage(imagePath );
 		originalImage = IJ.openImage(imagePath );
-		//originalImage.show();
+		originalImageFullSize.show();
 		//IJ.run(originalImage,"Size...", "width=200 height=129 constrain average interpolation=Bilinear");
 		downSizeFactor=originalImage.getWidth()/(float)200;
-		//IJ.run(originalImage,"Size...", "width=200 constrain average interpolation=Bilinear");
+		IJ.run(originalImage,"Size...", "width=200 constrain average interpolation=Bilinear");
+
+		edgeImage=IJ.openImage(imagePath);
+		//edgeImage.show();
+		IJ.run(edgeImage,"8-bit","");
+		IJ.run(edgeImage,"Smooth","");
+		IJ.run(edgeImage,"Find Edges","");
 		
 		image = IJ.openImage(imagePath );
 		//image.show();
 		IJ.run(image,"8-bit","");
 		IJ.run(image,"Smooth","");
 		IJ.run(image,"Find Edges","");
+
 		IJ.setAutoThreshold(image,"Default dark");
 		IJ.run(image, "Convert to Mask", "");
 		IJ.run(image,"Dilate","");
@@ -933,7 +940,8 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		IJ.run(image,"Erode","");
 		IJ.run(image,"Erode","");
 		IJ.run(image,"Outline","");
-		IJ.run(image,"Size...", "width=200 height=129 constrain average interpolation=Bilinear");
+		IJ.run(image,"Size...", "width=200 constrain average interpolation=Bilinear");
+		IJ.run(edgeImage,"Size...", "width=200 constrain average interpolation=Bilinear");
 		//image.show();
 		// run the plugin
 		IJ.runPlugIn(image,clazz.getName(), "");
