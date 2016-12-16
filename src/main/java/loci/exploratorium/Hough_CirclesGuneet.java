@@ -474,7 +474,7 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 	private void houghTransform () {
 
 		int lutSize = buildLookUpTable();
-
+		System.out.println(depth);
 		houghValues = new short[width][height][depth];//12.9.2006
 		miniMap  = new short[miniWidth][miniHeight][depth];//12.9.2006
 
@@ -892,11 +892,11 @@ public class Hough_CirclesGuneet implements PlugInFilter {
 		//imagePath = System.getProperty("user.dir") + "/images/junkfinder_25x_dic_frame1801.jpg";
 		//imagePath = System.getProperty("user.dir") + "/images/egg1.jpg";
 		//3 Fish
-		//imagePath = System.getProperty("user.dir") + "/images/Kip1.jpg";
+		imagePath = System.getProperty("user.dir") + "/images/Kip1.jpg";
 		
 		//1 Partial Fish
-		imagePath = System.getProperty("user.dir") + "/images/Kip801.jpg";
-		imagePath = System.getProperty("user.dir") + "/images/18121.jpg";
+		//imagePath = System.getProperty("user.dir") + "/images/Kip801.jpg";
+		//imagePath = System.getProperty("user.dir") + "/images/18121.jpg";
 		//1 Full Fish
 		//imagePath = System.getProperty("user.dir") + "/images/Kip1201.jpg";
 		
