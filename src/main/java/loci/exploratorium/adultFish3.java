@@ -28,7 +28,7 @@ public class adultFish3 implements PlugInFilter {
 		for (int i=1;i<=1;i++)
 		{
 			//Path of image
-			imagePath = System.getProperty("user.dir") + "/images/fry"+Integer.toString(i)+".jpg";		
+			imagePath = System.getProperty("user.dir") + "/images/fry"+Integer.toString(i)+".jpg";
 			originalImage = IJ.openImage(imagePath );
 			originalImage.setTitle(new String("OriginalImage"));
 			//originalImage.show();
@@ -47,7 +47,7 @@ public class adultFish3 implements PlugInFilter {
 			mask1.setImage(kip.createImage());
 			
 			int options=ParticleAnalyzer.SHOW_MASKS+ParticleAnalyzer.IN_SITU_SHOW;
-			int measurements=ParticleAnalyzer.CIRCULARITY+ParticleAnalyzer.AREA;
+			int measurements=ParticleAnalyzer.CIRCULARITY+ParticleAnalyzer.AREA+ParticleAnalyzer.CENTROID;
 			int minArea=2000;
 			int maxArea=Integer.MAX_VALUE;
 			float minCircularity=(float) 0.3;//
@@ -57,6 +57,7 @@ public class adultFish3 implements PlugInFilter {
 			//ParticleAnalyzer pa=new ParticleAnalyzer(options,measurements,rt,minArea,maxArea);//Particle Analyzer without specifying circulatrity
 			pa.analyze(mask1);
 			mask1.show();
+
 			Strel magnifyingDisk=Strel.Shape.DISK.fromRadius(50);//increases the border region 
 			kip=Morphology.dilation(mask1.getProcessor(),magnifyingDisk);
 			mask1.setImage(kip.createImage());
