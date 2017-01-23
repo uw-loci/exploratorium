@@ -7,7 +7,7 @@ import ij.process.*;
 import inra.ijpb.morphology.Strel;
 import inra.ijpb.morphology.Morphology;
 
-public class adultFish4 implements PlugInFilter {
+public class adultFish5 implements PlugInFilter {
 	public static ImagePlus originalImage,mask1;
 	public static String imagePath;
 	
@@ -24,7 +24,7 @@ public class adultFish4 implements PlugInFilter {
 	{
 		for(int x=1;x<=10;x++)
 		{
-			float ans[][]=new adultFish4().getCoordinates(x);
+			float ans[][]=new adultFish5().getCoordinates(x);
 			System.out.printf("************%d %d************\n",x,ans.length);
 			for(int i=0;i<ans.length;i++)
 			{
@@ -34,7 +34,7 @@ public class adultFish4 implements PlugInFilter {
 		}
 	}
 	
-	public float[][] getCoordinates(int index) {
+	public float[][] getCoordinates(int index) throws InterruptedException {
 		Class<?> clazz = adultFish2.class;
 		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
 		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
@@ -59,18 +59,33 @@ public class adultFish4 implements PlugInFilter {
 		ImageProcessor kip=Morphology.opening(mask1.getProcessor(), openingDisk);
 		mask1.setImage(kip.createImage());
 		
-		int options=ParticleAnalyzer.SHOW_MASKS+ParticleAnalyzer.IN_SITU_SHOW;
+		int options=ParticleAnalyzer.SHOW_MASKS+ParticleAnalyzer.IN_SITU_SHOW+ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES;
 		int measurements=ParticleAnalyzer.CIRCULARITY+ParticleAnalyzer.AREA+ParticleAnalyzer.CENTROID;
 		int minArea=2000;
 		int maxArea=Integer.MAX_VALUE;
 		float minCircularity=(float) 0.3;//
 		float maxCircularity=(float) 1.0;//
 		ResultsTable rt=new ResultsTable();
+		
 		ParticleAnalyzer pa=new ParticleAnalyzer(options,measurements,rt,minArea,maxArea,minCircularity,maxCircularity);
 		//ParticleAnalyzer pa=new ParticleAnalyzer(options,measurements,rt,minArea,maxArea);//Particle Analyzer without specifying circulatrity
 		pa.analyze(mask1);
+		rt.reset();
+		//mask1.show();
+		
+		//merging nearby elements together
+		Strel mergingDisk=Strel.Shape.DISK.fromRadius(70);
+		kip=Morphology.dilation(mask1.getProcessor(), mergingDisk);
+		mask1.setImage(kip.createImage());
+		
+		int options2=ParticleAnalyzer.SHOW_MASKS+ParticleAnalyzer.IN_SITU_SHOW;
+		pa=new ParticleAnalyzer(options2,measurements,rt,minArea,maxArea,minCircularity,maxCircularity);
+		pa.analyze(mask1);
 		mask1.show();
-
+		
+		String tempFilename=new String("mask")+Integer.toString(index)+new String(".png");
+		IJ.save(mask1,tempFilename);
+		
 		float coordinates[][]=new float[rt.size()][3];//format x,y,radius
 		for(int x=0;x<rt.size();x++)
 		{
