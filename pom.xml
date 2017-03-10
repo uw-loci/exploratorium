@@ -31,10 +31,6 @@
 		<developer>
 			<id>bdai6</id>
 			<name>Bing Dai</name>
-			<email>bdai6@wisc.edu</email>
-			<url>https://loci.wisc.edu/people/bing-dai</url>
-			<organization>UW-Madison LOCI</organization>
-			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
 			<roles>
 				<role>founder</role>
 				<role>lead</role>
@@ -43,12 +39,20 @@
 				<role>reviewer</role>
 				<role>maintainer</role>
 			</roles>
-			<timezone>-6</timezone>
+		</developer>
+		<developer>
+			<id>guneetsinghmehta</id>
+			<name>Guneet Singh Mehta</name>
+			<roles>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+			</roles>
 		</developer>
 		<developer>
 			<id>ctrueden</id>
 			<name>Curtis Rueden</name>
-			<url>http://imagej.net/User:Rueden</url>
+			<url>https://imagej.net/User:Rueden</url>
 			<roles>
 				<role>maintainer</role>
 			</roles>
