@@ -22,7 +22,7 @@
 	<licenses>
 		<license>
 			<name>GNU General Public License v3+</name>
-			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<url>https://www.gnu.org/licenses/gpl.html</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
@@ -69,7 +69,7 @@
 	<repositories>
 		<repository>
 			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
+			<url>https://maven.imagej.net/content/groups/public</url>
 		</repository>
 	</repositories>
 
