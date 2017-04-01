@@ -6,9 +6,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>loci</groupId>
-		<artifactId>pom-loci</artifactId>
-		<version>2.0.0</version>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>14.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -18,7 +18,12 @@
 
 	<name>LOCI Exploratorium plugins</name>
 	<description>A collection of ImageJ plugins for the Exploratorium</description>
+	<url>https://github.com/uw-loci/exploratorium</url>
 	<inceptionYear>2016</inceptionYear>
+	<organization>
+		<name>LOCI</name>
+		<url>https://loci.wisc.edu/</url>
+	</organization>
 	<licenses>
 		<license>
 			<name>GNU General Public License v3+</name>
@@ -58,6 +63,25 @@
 			</roles>
 		</developer>
 	</developers>
+	<contributors>
+		<!--
+		NB: Need at least one element to override the parent.
+		See: https://issues.apache.org/jira/browse/MNG-5220
+		-->
+		<contributor>
+			<name>None</name>
+		</contributor>
+	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>LOCI Software</name>
+			<subscribe>https://loci.wisc.edu/mailman/listinfo/loci-software</subscribe>
+			<unsubscribe>https://loci.wisc.edu/mailman/listinfo/loci-software</unsubscribe>
+			<post>loci-software@loci.wisc.edu</post>
+			<archive>https://loci.wisc.edu/pipermail/loci-software/</archive>
+		</mailingList>
+	</mailingLists>
 
 	<scm>
 		<connection>scm:git:git://github.com/uw-loci/exploratorium</connection>
@@ -65,6 +89,21 @@
 		<tag>HEAD</tag>
 		<url>https://github.com/uw-loci/exploratorium</url>
 	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/uw-loci/exploratorium/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/uw-loci/exploratorium</url>
+	</ciManagement>
+
+	<properties>
+		<package-name>loci.exploratorium</package-name>
+		<license.licenseName>gpl_v3</license.licenseName>
+		<license.copyrightOwners>Board of Regents of the University of
+Wisconsin-Madison.</license.copyrightOwners>
+	</properties>
 
 	<repositories>
 		<repository>
@@ -79,16 +118,4 @@
 			<artifactId>ij</artifactId>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>license-maven-plugin</artifactId>
-				<configuration>
-					<licenseName>gpl_v3</licenseName>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>
